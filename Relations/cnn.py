@@ -29,7 +29,7 @@ if __name__ == "__main__":
   cfg.read(sys.argv[1])
   print 'train:', cfg.get('data', 'train')
   print 'test:', cfg.get('data', 'test')  
-  print 'batches:', cfg.get('cnn', 'batch')
+  print 'batch:', cfg.get('cnn', 'batch')
   print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
   print 'filters:', cfg.get('cnn', 'filters')

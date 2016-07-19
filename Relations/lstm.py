@@ -26,7 +26,7 @@ if __name__ == "__main__":
   cfg.read(sys.argv[1])
   print 'train:', cfg.get('data', 'train')
   print 'test:', cfg.get('data', 'test')
-  print 'batches:', cfg.get('lstm', 'batches')
+  print 'batch:', cfg.get('lstm', 'batch')
   print 'epochs:', cfg.get('lstm', 'epochs')
   print 'embdims:', cfg.get('lstm', 'embdims')
   print 'units:', cfg.get('lstm', 'units')
@@ -60,8 +60,7 @@ if __name__ == "__main__":
   model.add(Embedding(len(dataset.word2int),
                       cfg.getint('lstm', 'embdims'),
                       input_length=maxlen,
-                      dropout=cfg.getint('lstm', 'embdims'),
-                      weights=None)) 
+                      dropout=cfg.getfloat('lstm', 'dropout')))
   model.add(LSTM(cfg.getint('lstm', 'units')))
   model.add(Dense(classes))
   model.add(Activation('softmax'))
@@ -74,13 +73,13 @@ if __name__ == "__main__":
   model.fit(train_x,
             train_y,
             nb_epoch=cfg.getint('lstm', 'epochs'),
-            batch_size=cfg.getint('lstm', 'batches'),
+            batch_size=cfg.getint('lstm', 'batch'),
             verbose=1,
             validation_split=0.1)
 
   # distribution over classes
   distribution = \
-    model.predict(test_x, batch_size=cfg.getint('lstm', 'batches'))
+    model.predict(test_x, batch_size=cfg.getint('lstm', 'batch'))
   # class predictions
   predictions = np.argmax(distribution, axis=1)
   # gold labels
