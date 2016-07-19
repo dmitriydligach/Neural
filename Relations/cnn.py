@@ -29,7 +29,7 @@ if __name__ == "__main__":
   cfg.read(sys.argv[1])
   print 'train:', cfg.get('data', 'train')
   print 'test:', cfg.get('data', 'test')  
-  print 'batches:', cfg.get('cnn', 'batches')
+  print 'batches:', cfg.get('cnn', 'batch')
   print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
   print 'filters:', cfg.get('cnn', 'filters')
@@ -110,14 +110,14 @@ if __name__ == "__main__":
   model.fit(train_xs,
             train_y,
             nb_epoch=cfg.getint('cnn', 'epochs'),
-            batch_size=cfg.getint('cnn', 'batches'),
+            batch_size=cfg.getint('cnn', 'batch'),
             verbose=1,
             validation_split=0.1,
             class_weight=None)
 
   # probability for each class; (test size, num of classes)
   distribution = \
-    model.predict(test_xs, batch_size=cfg.getint('cnn', 'batches'))
+    model.predict(test_xs, batch_size=cfg.getint('cnn', 'batch'))
   # class predictions; (test size,)
   predictions = np.argmax(distribution, axis=1)
   # gold labels; (test size,)
