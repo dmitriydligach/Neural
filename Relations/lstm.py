@@ -95,7 +95,7 @@ if __name__ == "__main__":
   if 'contains' in dataset.label2int:
     idxs = [dataset.label2int['contains'], dataset.label2int['contains-1']]
     contains_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
-    print 'f1(contains) =', contains_f1
+    print '\nf1(contains average) =', contains_f1
   else:
     idxs = dataset.label2int.values()
     average_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
