@@ -1,60 +1,70 @@
-#!/Library/Frameworks/Python.framework/Versions/2.7/bin/python -B
+#!/usr/bin/env python
+
+"""
+Notes
+-----
+
+Number of training examples is the number of words in training data.
+Thus, input_length to LSTM is wc -w train.txt.
+"""
 
 import numpy as np
+np.random.seed(1337)
+
+import sys
+sys.dont_write_bytecode = True
+
 import sklearn as sk
-import sklearn.cross_validation
-import keras as k
-import keras.utils.np_utils
-import dataset
-
-from keras.preprocessing import sequence
+from keras.utils.np_utils import to_categorical
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation
-from keras.layers.embeddings import Embedding
-from keras.layers.recurrent import LSTM, SimpleRNN, GRU
+from keras.layers.core import Dense, Activation
+from keras.layers import LSTM
+from dataset import DatasetProvider
+import word2vec_model
 
-NFOLDS = 10
-BATCH = 50
-EPOCHS = 5
-EMBDIMS = 300
+train_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/train.txt'
+test_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/dev.txt'
+emb_path = '/Users/Dima/Loyola/Data/Word2VecModels/mimic.txt'
+
+batch = 50
+epochs = 1
 
 if __name__ == "__main__":
 
-  dataset = dataset.DatasetProvider()
-  x, y = dataset.load()
-  print 'x shape:', x.shape
-  print 'y shape:', y.shape
+  train = DatasetProvider(train_path)
+  train_x, train_y = train.load(emb_path)
+  train_y = to_categorical(train_y, 2)
+  test = DatasetProvider(test_path)
+  test_x, test_y = test.load(emb_path)
+  test_y = to_categorical(test_y, 2)
+
+  print 'train_x shape:', train_x.shape
+  print 'train_y shape:', train_y.shape
+  print 'test_x shape:', test_x.shape
+  print 'test_y shape:', test_y.shape
   
-  scores = []
-  folds = sk.cross_validation.KFold(len(y), n_folds=NFOLDS, shuffle=True)
-
-  for fold_num, (train_indices, test_indices) in enumerate(folds):
-    train_x = x[train_indices]
-    train_y = y[train_indices]
-    test_x = x[test_indices]
-    test_y = y[test_indices]
-    
-    model = k.models.Sequential()
-    model.add(LSTM(128, input_length=205845, input_dim=300))
-    # model.add(Dense(128, input_shape=(EMBDIMS,)))
-    model.add(Dense(1))
-    model.add(Activation('sigmoid'))
-
-    model.compile(loss='binary_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
-    model.fit(train_x,
-              train_y,
-              nb_epoch=EPOCHS,
-              batch_size=BATCH,
-              verbose=0,
-              validation_split=0.1)
-    score, accuracy = model.evaluate(test_x,
-                                     test_y,
-                                     batch_size=BATCH,
-                                     verbose=0)
-    # todo: what is score?
-    print 'fold %d accuracy: %f' % (fold_num, accuracy)
-    scores.append(accuracy)
+  model = Sequential()
+  model.add(LSTM(128, input_length=247922, input_dim=300))
+  model.add(Dense(2))
+  model.add(Activation('softmax'))
+  
+  # model.add(Dense(1))
+  # model.add(Activation('sigmoid'))
+  
+  model.compile(loss='categorical_crossentropy',
+                optimizer='rmsprop',
+                metrics=['accuracy'])
+  model.fit(train_x,
+            train_y,
+            nb_epoch=epochs,
+            batch_size=batch,
+            verbose=1,
+            validation_split=0.1)
+  score, accuracy = model.evaluate(test_x,
+                                   test_y,
+                                   batch_size=batch,
+                                   verbose=1)
+  print 'fold %d accuracy: %f' % (fold_num, accuracy)
+  scores.append(accuracy)
   
   print np.mean(scores)

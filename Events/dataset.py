@@ -1,45 +1,37 @@
-#!/Library/Frameworks/Python.framework/Versions/2.7/bin/python -B
+#!/usr/bin/env python
 
-"""
-Some statistics:
-
-tokens in data: 7463
-embeddings: 131045
-have embeddings for: 6237
-"""
+import sys
+sys.path.append('../Lib/')
+sys.dont_write_bytecode = True
 
 import numpy
 import word2vec_model
 
-GOLDPATH = '/Users/Dima/Loyola/Data/Thyme/events.txt'
-EMBPATH = '/Users/Dima/Loyola/Data/Word2Vec/Models/mimic.txt'
-
 class DatasetProvider:
   """Provide data"""
 
-  def __init__(self, path=GOLDPATH):
+  def __init__(self, data_path):
     """Each token is a sample. Events are marked as [event]"""
 
     self.data = []
     self.labels = []
     
-    for line in open(GOLDPATH):
+    for line in open(data_path):
       for token in line.split():
         if token.startswith('[') and token.endswith(']'):
-          self.labels.append(1)   # this is an event
           self.data.append(token[1:-1])
+          self.labels.append(1)   # this is an event
         else:
-          self.labels.append(0)   # this is not an event
           self.data.append(token)
+          self.labels.append(0)   # this is not an event
 
-
-  def load(self, path=EMBPATH):
+  def load(self, embed_path):
     """Each token is a sample"""
 
-    word2vec = word2vec_model.Model(path)
+    word2vec = word2vec_model.Model(embed_path)
     uniq_words_in_data = set(self.data)
     average = word2vec.average_words(uniq_words_in_data)
-    
+
     data = [] # list of numpy arrays
     for token in self.data:
       if token in word2vec.vectors:
@@ -51,6 +43,10 @@ class DatasetProvider:
 
 if __name__ == "__main__":
 
-  dataset = DatasetProvider()
-  dataset.load()
+  train_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/train.txt'
+  test_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/dev.txt'
+  emb_path = '/Users/Dima/Loyola/Data/Word2VecModels/mimic.txt'
+  
+  dataset = DatasetProvider(train_path)
+  dataset.load(emb_path)
   
