@@ -15,6 +15,7 @@ import sys
 sys.dont_write_bytecode = True
 
 import sklearn as sk
+from sklearn.metrics import f1_score
 from keras.utils.np_utils import to_categorical
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation
@@ -44,12 +45,15 @@ if __name__ == "__main__":
   print 'test_y shape:', test_y.shape
   
   model = Sequential()
-  model.add(LSTM(128, input_length=247922, input_dim=300))
+
+  # model.add(LSTM(128, input_dim=300, input_length=train_x.shape[0]))
+  # model.add(LSTM(128))
+
+  model.add(Dense(128, input_dim=300))
+  model.add(Activation('relu'))
+
   model.add(Dense(2))
   model.add(Activation('softmax'))
-  
-  # model.add(Dense(1))
-  # model.add(Activation('sigmoid'))
   
   model.compile(loss='categorical_crossentropy',
                 optimizer='rmsprop',
@@ -60,11 +64,16 @@ if __name__ == "__main__":
             batch_size=batch,
             verbose=1,
             validation_split=0.1)
-  score, accuracy = model.evaluate(test_x,
-                                   test_y,
-                                   batch_size=batch,
-                                   verbose=1)
-  print 'fold %d accuracy: %f' % (fold_num, accuracy)
-  scores.append(accuracy)
   
-  print np.mean(scores)
+  # probability for each class; (test size, num of classes)
+  distribution = model.predict(test_x, batch_size=batch)
+  # class predictions; (test size,)
+  predictions = np.argmax(distribution, axis=1)
+  # gold labels; (test size,)
+  gold = np.argmax(test_y, axis=1)
+
+  # f1 scores
+  label_f1 = f1_score(gold, predictions, average=None)
+  positive_class_index = 1
+  print 'f1:', label_f1[positive_class_index]
+  
