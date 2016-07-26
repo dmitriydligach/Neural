@@ -31,6 +31,8 @@ if __name__ == "__main__":
   print 'embdims:', cfg.get('lstm', 'embdims')
   print 'units:', cfg.get('lstm', 'units')
   print 'dropout:', cfg.get('lstm', 'dropout')
+  print 'udropout:', cfg.get('lstm', 'udropout')
+  print 'wdropout:', cfg.get('lstm', 'wdropout')
   print 'learnrt:', cfg.get('lstm', 'learnrt')
   
   # learn alphabet from training data
@@ -61,7 +63,9 @@ if __name__ == "__main__":
                       cfg.getint('lstm', 'embdims'),
                       input_length=maxlen,
                       dropout=cfg.getfloat('lstm', 'dropout')))
-  model.add(LSTM(cfg.getint('lstm', 'units')))
+  model.add(LSTM(cfg.getint('lstm', 'units'),
+                 dropout_W = cfg.getfloat('lstm', 'wdropout'),
+                 dropout_U = cfg.getfloat('lstm', 'udropout')))
   model.add(Dense(classes))
   model.add(Activation('softmax'))
 
