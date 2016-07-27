@@ -46,11 +46,6 @@ if __name__ == "__main__":
   train_x, train_y = dataset.load(cfg.get('data', 'train'))
   # now load test examples and labels
   test_x, test_y = dataset.load(cfg.get('data', 'test'))
-
-  # calculate the weights as described at
-  # http://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
-  classes = len(set(train_y))
-  weights = len(train_y) / (float(classes) * np.bincount(train_y))
   
   init_vectors = None
   # TODO: what what are we doing for index 0 (oov words)?
@@ -60,8 +55,8 @@ if __name__ == "__main__":
     word2vec = word2vec_model.Model(cfg.get('data', 'embed'))
     init_vectors = [word2vec.select_vectors(dataset.word2int)]
   
-    
   # turn x and y into numpy array among other things
+  classes = len(set(train_y))
   maxlen = max([len(seq) for seq in train_x + test_x])
   train_x = pad_sequences(train_x, maxlen=maxlen)
   train_y = to_categorical(np.array(train_y), classes)  
@@ -118,7 +113,7 @@ if __name__ == "__main__":
             batch_size=cfg.getint('cnn', 'batch'),
             verbose=1,
             validation_split=0.1,
-            class_weight=dict(enumerate(weights)))
+            class_weight=None)
 
   # probability for each class; (test size, num of classes)
   distribution = \
