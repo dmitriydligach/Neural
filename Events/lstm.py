@@ -1,13 +1,5 @@
 #!/usr/bin/env python
 
-"""
-Notes
------
-
-Number of training examples is the number of words in training data.
-Thus, input_length to LSTM is wc -w train.txt.
-"""
-
 import numpy as np
 np.random.seed(1337)
 
@@ -16,28 +8,47 @@ sys.dont_write_bytecode = True
 
 import sklearn as sk
 from sklearn.metrics import f1_score
+import keras as k
 from keras.utils.np_utils import to_categorical
+from keras.optimizers import RMSprop
+from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation
+from keras.layers.core import Dense, Dropout, Activation
+from keras.layers.embeddings import Embedding
 from keras.layers import LSTM
-from dataset import DatasetProvider
-import word2vec_model
-
-train_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/train.txt'
-test_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/dev.txt'
-emb_path = '/Users/Dima/Loyola/Data/Word2VecModels/mimic.txt'
-
-batch = 50
-epochs = 1
+import dataset
+import ConfigParser
 
 if __name__ == "__main__":
 
-  train = DatasetProvider(train_path)
-  train_x, train_y = train.load(emb_path)
-  train_y = to_categorical(train_y, 2)
-  test = DatasetProvider(test_path)
-  test_x, test_y = test.load(emb_path)
-  test_y = to_categorical(test_y, 2)
+  cfg = ConfigParser.ConfigParser()
+  cfg.read(sys.argv[1])
+  print 'train:', cfg.get('data', 'train')
+  print 'test:', cfg.get('data', 'test')
+  print 'batch:', cfg.get('lstm', 'batch')
+  print 'epochs:', cfg.get('lstm', 'epochs')
+  print 'embdims:', cfg.get('lstm', 'embdims')
+  print 'units:', cfg.get('lstm', 'units')
+  print 'dropout:', cfg.get('lstm', 'dropout')
+  print 'udropout:', cfg.get('lstm', 'udropout')
+  print 'wdropout:', cfg.get('lstm', 'wdropout')
+  print 'learnrt:', cfg.get('lstm', 'learnrt')
+  
+  # learn alphabet from training data
+  dataset = \
+    dataset.DatasetProvider([cfg.get('data', 'train'),
+                             cfg.get('data', 'test')])
+  # now load training examples and labels
+  train_x, train_y = dataset.load(cfg.get('data', 'train'))
+  # now load test examples and labels
+  test_x, test_y = dataset.load(cfg.get('data', 'test'))
+
+  # turn x and y into numpy array among other things
+  maxlen = max([len(seq) for seq in train_x + test_x])
+  train_x = pad_sequences(train_x, maxlen=maxlen)
+  train_y = np.array(train_y)
+  test_x = pad_sequences(test_x, maxlen=maxlen)
+  test_y = np.array(test_y)
 
   print 'train_x shape:', train_x.shape
   print 'train_y shape:', train_y.shape
@@ -45,35 +56,49 @@ if __name__ == "__main__":
   print 'test_y shape:', test_y.shape
   
   model = Sequential()
+    
+  model.add(Embedding(input_dim=len(dataset.word2int),
+                      output_dim=cfg.getint('lstm', 'embdims'),
+                      input_length=maxlen,
+                      dropout=cfg.getfloat('lstm', 'dropout')))
+  model.add(LSTM(cfg.getint('lstm', 'units'),
+                 dropout_W = cfg.getfloat('lstm', 'wdropout'),
+                 dropout_U = cfg.getfloat('lstm', 'udropout')))
+  model.add(Dense(1))
+  model.add(Activation('sigmoid'))
 
-  # model.add(LSTM(128, input_dim=300, input_length=train_x.shape[0]))
-  # model.add(LSTM(128))
-
-  model.add(Dense(128, input_dim=300))
-  model.add(Activation('relu'))
-
-  model.add(Dense(2))
-  model.add(Activation('softmax'))
-  
-  model.compile(loss='categorical_crossentropy',
-                optimizer='rmsprop',
+  optimizer = RMSprop(lr=cfg.getfloat('lstm', 'learnrt'),
+                      rho=0.9, epsilon=1e-08)
+  model.compile(loss='binary_crossentropy',
+                optimizer=optimizer,
                 metrics=['accuracy'])
   model.fit(train_x,
             train_y,
-            nb_epoch=epochs,
-            batch_size=batch,
+            nb_epoch=cfg.getint('lstm', 'epochs'),
+            batch_size=cfg.getint('lstm', 'batch'),
             verbose=1,
             validation_split=0.1)
-  
-  # probability for each class; (test size, num of classes)
-  distribution = model.predict(test_x, batch_size=batch)
-  # class predictions; (test size,)
+
+  # distribution over classes
+  distribution = \
+    model.predict(test_x, batch_size=cfg.getint('lstm', 'batch'))
+  # class predictions
   predictions = np.argmax(distribution, axis=1)
-  # gold labels; (test size,)
+  # gold labels
   gold = np.argmax(test_y, axis=1)
 
   # f1 scores
   label_f1 = f1_score(gold, predictions, average=None)
-  positive_class_index = 1
-  print 'f1:', label_f1[positive_class_index]
-  
+
+  print
+  for label, idx in dataset.label2int.items():
+    print 'f1(%s)=%f' % (label, label_f1[idx])
+
+  if 'contains' in dataset.label2int:
+    idxs = [dataset.label2int['contains'], dataset.label2int['contains-1']]
+    contains_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
+    print '\nf1(contains average) =', contains_f1
+  else:
+    idxs = dataset.label2int.values()
+    average_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
+    print 'f1(all) =', average_f1

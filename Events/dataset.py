@@ -1,52 +1,63 @@
 #!/usr/bin/env python
 
+import numpy as np
+
 import sys
-sys.path.append('../Lib/')
 sys.dont_write_bytecode = True
 
-import numpy
-import word2vec_model
+import ConfigParser
+
+import glob, string, collections, operator
 
 class DatasetProvider:
-  """Provide data"""
+  """THYME relation data"""
+  
+  def __init__(self, file_names):
+    """Index words by frequency in a list of files"""
 
-  def __init__(self, data_path):
-    """Each token is a sample. Events are marked as [event]"""
-
-    self.data = []
-    self.labels = []
+    self.word2int = {}  # words indexed by frequency
     
-    for line in open(data_path):
-      for token in line.split():
-        if token.startswith('[') and token.endswith(']'):
-          self.data.append(token[1:-1])
-          self.labels.append(1)   # this is an event
-        else:
-          self.data.append(token)
-          self.labels.append(0)   # this is not an event
+    unigrams = [] # corpus as list
+    labels = []   # classes as list
+    for file_name in file_names:
+      for line in open(file_name):
+        _, text = line.strip().split('|')
+        unigrams.extend(text.split())
+        
+    index = 1 # zero used to encode unknown words
+    self.word2int['oov_word'] = 0
+    unigram_counts = collections.Counter(unigrams)
+    for unigram, count in unigram_counts.most_common():
+      self.word2int[unigram] = index
+      index = index + 1
 
-  def load(self, embed_path):
-    """Each token is a sample"""
+  def load(self, path):
+    """Convert sentences (examples) into lists of indices"""
 
-    word2vec = word2vec_model.Model(embed_path)
-    uniq_words_in_data = set(self.data)
-    average = word2vec.average_words(uniq_words_in_data)
+    examples = []
+    labels = []
+    for line in open(path):
+      label_list, text = line.strip().split('|')
+      example = []
+      for unigram in text.split():
+        example.append(self.word2int[unigram])
+      examples.append(example)
+      labels.append([int(label) for label in label_list.split()])
 
-    data = [] # list of numpy arrays
-    for token in self.data:
-      if token in word2vec.vectors:
-        data.append(word2vec.vectors[token])
-      else:
-        data.append(average)
-
-    return numpy.array(data), numpy.array(self.labels)
+    return examples, labels
 
 if __name__ == "__main__":
 
-  train_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/train.txt'
-  test_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/dev.txt'
-  emb_path = '/Users/Dima/Loyola/Data/Word2VecModels/mimic.txt'
-  
-  dataset = DatasetProvider(train_path)
-  dataset.load(emb_path)
-  
+  cfg = ConfigParser.ConfigParser()
+  cfg.read(sys.argv[1])
+
+  dataset = DatasetProvider([cfg.get('data', 'train'),
+                             cfg.get('data', 'test')])
+  print 'alphabet size:', len(dataset.word2int)
+
+  x,y = dataset.load(cfg.get('data', 'test'))
+
+  print 'max seq len:', max([len(s) for s in x])
+  print 'number of examples:', len(x)
+  print 'first 5 examples:', x[:5]
+  print 'first 5 labels:', y[:5]
