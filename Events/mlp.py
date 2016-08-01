@@ -20,7 +20,7 @@ from keras.utils.np_utils import to_categorical
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation
 from keras.layers import LSTM
-from dataset import DatasetProvider
+from dataset_for_mlp import DatasetProvider
 import word2vec_model
 
 train_path = '/Users/Dima/Loyola/Data/Thyme/Deep/Events/train.txt'

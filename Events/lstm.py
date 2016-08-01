@@ -14,6 +14,7 @@ from keras.optimizers import RMSprop
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
+from keras.layers.wrappers import TimeDistributed
 from keras.layers.embeddings import Embedding
 from keras.layers import LSTM
 import dataset
@@ -46,10 +47,13 @@ if __name__ == "__main__":
   # turn x and y into numpy array among other things
   maxlen = max([len(seq) for seq in train_x + test_x])
   train_x = pad_sequences(train_x, maxlen=maxlen)
-  train_y = np.array(train_y)
+  train_y = pad_sequences(train_y, maxlen=maxlen)
   test_x = pad_sequences(test_x, maxlen=maxlen)
-  test_y = np.array(test_y)
+  test_y = pad_sequences(test_y, maxlen=maxlen)
 
+  train_y =  np.array([to_categorical(seq, 3) for seq in train_y])
+  test_y =  np.array([to_categorical(seq, 3) for seq in test_y])
+  
   print 'train_x shape:', train_x.shape
   print 'train_y shape:', train_y.shape
   print 'test_x shape:', test_x.shape
@@ -62,14 +66,16 @@ if __name__ == "__main__":
                       input_length=maxlen,
                       dropout=cfg.getfloat('lstm', 'dropout')))
   model.add(LSTM(cfg.getint('lstm', 'units'),
+                 return_sequences=True,
                  dropout_W = cfg.getfloat('lstm', 'wdropout'),
                  dropout_U = cfg.getfloat('lstm', 'udropout')))
-  model.add(Dense(1))
-  model.add(Activation('sigmoid'))
+  # model.add(Dense(1))
+  model.add(TimeDistributed(Dense(3)))
+  model.add(Activation('softmax'))
 
   optimizer = RMSprop(lr=cfg.getfloat('lstm', 'learnrt'),
                       rho=0.9, epsilon=1e-08)
-  model.compile(loss='binary_crossentropy',
+  model.compile(loss='categorical_crossentropy',
                 optimizer=optimizer,
                 metrics=['accuracy'])
   model.fit(train_x,
@@ -89,16 +95,5 @@ if __name__ == "__main__":
 
   # f1 scores
   label_f1 = f1_score(gold, predictions, average=None)
-
-  print
-  for label, idx in dataset.label2int.items():
-    print 'f1(%s)=%f' % (label, label_f1[idx])
-
-  if 'contains' in dataset.label2int:
-    idxs = [dataset.label2int['contains'], dataset.label2int['contains-1']]
-    contains_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
-    print '\nf1(contains average) =', contains_f1
-  else:
-    idxs = dataset.label2int.values()
-    average_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
-    print 'f1(all) =', average_f1
+  positive_class_index = 1
+  print 'f1:', label_f1[positive_class_index]
