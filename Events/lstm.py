@@ -69,7 +69,6 @@ if __name__ == "__main__":
                  return_sequences=True,
                  dropout_W = cfg.getfloat('lstm', 'wdropout'),
                  dropout_U = cfg.getfloat('lstm', 'udropout')))
-  # model.add(Dense(1))
   model.add(TimeDistributed(Dense(3)))
   model.add(Activation('softmax'))
 
@@ -85,15 +84,21 @@ if __name__ == "__main__":
             verbose=1,
             validation_split=0.1)
 
-  # distribution over classes
+  # distribution over classes (8645, 187, 3)
   distribution = \
     model.predict(test_x, batch_size=cfg.getint('lstm', 'batch'))
-  # class predictions
-  predictions = np.argmax(distribution, axis=1)
-  # gold labels
-  gold = np.argmax(test_y, axis=1)
+  # class predictions (8645, 187)
+  predictions = np.argmax(distribution, axis=2)
+  # gold labels (8645, 187)
+  gold = np.argmax(test_y, axis=2)
+
+  # reshape into 1-d arrays
+  total_labels = gold.shape[0] * gold.shape[1]
+  predictions = predictions.reshape(total_labels)
+  gold = gold.reshape(total_labels)
 
   # f1 scores
   label_f1 = f1_score(gold, predictions, average=None)
   positive_class_index = 1
   print 'f1:', label_f1[positive_class_index]
+  print 'all labels:', label_f1
