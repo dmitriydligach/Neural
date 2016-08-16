@@ -100,7 +100,8 @@ if __name__ == "__main__":
 
   # distribution over classes (8645, 187, 3)
   distribution = \
-    model.predict(test_x, batch_size=cfg.getint('lstm', 'batch'))
+    model.predict([test_x, text_x],
+                  batch_size=cfg.getint('lstm', 'batch'))
   # class predictions (8645, 187)
   predictions = np.argmax(distribution, axis=2)
   # gold labels (8645, 187)
