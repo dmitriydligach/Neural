@@ -24,7 +24,7 @@ class DatasetProvider:
         _, text = line.strip().split('|')
         unigrams.extend(text.split())
         
-    index = 1 # zero used to encode unknown words
+    index = 1
     self.word2int['oov_word'] = 0
     unigram_counts = collections.Counter(unigrams)
     for unigram, count in unigram_counts.most_common():
