@@ -83,6 +83,7 @@ if __name__ == "__main__":
   
   model = Sequential()
   model.add(Merge([left, right], mode='concat'))
+  model.add(Dropout(cfg.getfloat('lstm', 'dropout')))
   model.add(TimeDistributed(Dense(3)))
   model.add(Activation('softmax'))
 
