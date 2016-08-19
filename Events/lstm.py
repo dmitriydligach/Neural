@@ -4,6 +4,7 @@ import numpy as np
 np.random.seed(1337)
 
 import sys
+sys.path.append('../Lib/')
 sys.dont_write_bytecode = True
 
 import sklearn as sk
@@ -17,8 +18,9 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.wrappers import TimeDistributed
 from keras.layers.embeddings import Embedding
 from keras.layers import LSTM
-import dataset
 import ConfigParser
+import word2vec_model
+import dataset
 
 if __name__ == "__main__":
 
@@ -44,6 +46,14 @@ if __name__ == "__main__":
   # now load test examples and labels
   test_x, test_y = dataset.load(cfg.get('data', 'test'))
 
+  init_vectors = None
+  # TODO: what what are we doing for index 0 (oov words)?
+  # use pre-trained word embeddings?
+  if cfg.has_option('data', 'embed'):
+    print 'embeddings:', cfg.get('data', 'embed')
+    word2vec = word2vec_model.Model(cfg.get('data', 'embed'))
+    init_vectors = [word2vec.select_vectors(dataset.word2int)]
+  
   # turn x and y into numpy array among other things
   maxlen = max([len(seq) for seq in train_x + test_x])
   train_x = pad_sequences(train_x, maxlen=maxlen)
@@ -64,7 +74,8 @@ if __name__ == "__main__":
   model.add(Embedding(input_dim=len(dataset.word2int),
                       output_dim=cfg.getint('lstm', 'embdims'),
                       input_length=maxlen,
-                      dropout=cfg.getfloat('lstm', 'dropout')))
+                      dropout=cfg.getfloat('lstm', 'dropout'),
+                      weights=init_vectors))
   model.add(LSTM(cfg.getint('lstm', 'units'),
                  return_sequences=True,
                  dropout_W = cfg.getfloat('lstm', 'wdropout'),
