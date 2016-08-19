@@ -1,0 +1,20 @@
+# Experiments
+
+Best result so far: F1=0.8216
+
+[data]
+train = /home/dima/Data/Thyme/Deep/Events/train.txt
+test = /home/dima/Data/Thyme/Deep/Events/dev.txt
+embed = /home/dima/Data/Word2VecModels/mimic.txt
+
+[lstm]
+batch = 50
+epochs = 10
+embdims = 300
+units = 32
+dropout = 0.0
+wdropout = 0.00
+udropout = 0.00
+learnrt = 0.001
+
+Without pre-trained embeddings: F1=0.8205
