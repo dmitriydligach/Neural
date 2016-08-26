@@ -33,6 +33,27 @@ f1s =  [ 0.53781513  0.757993    0.8414892   0.82110003]
 
 === Event-Time Relations ===
 
+# CNN / Mac / CPU
+
+/Users/Dima/Git/Deep/Relations/>cnn.py et.cfg
+Using Theano backend.
+train: /Users/Dima/Loyola/Data/Thyme/Deep/EventTime/train.txt
+test: /Users/Dima/Loyola/Data/Thyme/Deep/EventTime/dev.txt
+batch: 50
+epochs: 3
+embdims: 300
+filters: 200
+filtlen: 3,4,5
+hidden: 250
+dropout: 0.25
+learnrt: 0.0001
+train_x shape: (18145, 190)
+train_y shape: (18145, 3)
+test_x shape: (9902, 190)
+test_y shape: (9902, 3)
+
+f1(contains average) = 0.670327349525
+
 # CNN / Watermelon / GPU
 
 train: /home/dima/Data/Thyme/Deep/EventTime/train.txt
