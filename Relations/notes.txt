@@ -35,6 +35,13 @@ f1s =  [ 0.53781513  0.757993    0.8414892   0.82110003]
 
 # CNN / Mac / CPU
 
+ctakes result:
+
+P      R  F1  #gold #system #correct
+0.740  0.621  0.675 2462    2066  1528  OVERALL
+
+out-of-ctakes result:
+
 /Users/Dima/Git/Deep/Relations/>cnn.py et.cfg
 Using Theano backend.
 train: /Users/Dima/Loyola/Data/Thyme/Deep/EventTime/train.txt
