@@ -35,17 +35,15 @@ if __name__ == "__main__":
   print 'wdropout:', cfg.get('lstm', 'wdropout')
   print 'learnrt:', cfg.get('lstm', 'learnrt')
   
-  # learn alphabet from training data
-  dataset = \
-    dataset.DatasetProvider([cfg.get('data', 'train'),
-                             cfg.get('data', 'test')])
+  # learn alphabet from training examples
+  dataset = dataset.DatasetProvider(cfg.get('data', 'train'))
   # now load training examples and labels
   train_x, train_y = dataset.load(cfg.get('data', 'train'))
+  maxlen = max([len(seq) for seq in train_x])
   # now load test examples and labels
-  test_x, test_y = dataset.load(cfg.get('data', 'test'))
+  test_x, test_y = dataset.load(cfg.get('data', 'test'), maxlen=maxlen)
 
   # turn x and y into numpy array among other things
-  maxlen = max([len(seq) for seq in train_x + test_x])
   classes = len(set(train_y))
   train_x = pad_sequences(train_x, maxlen=maxlen)
   train_y = to_categorical(np.array(train_y), classes)  
