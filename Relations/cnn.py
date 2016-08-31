@@ -38,14 +38,13 @@ if __name__ == "__main__":
   print 'dropout:', cfg.get('cnn', 'dropout')
   print 'learnrt:', cfg.get('cnn', 'learnrt')
 
-  # learn alphabet from training and test data
-  dataset = \
-    dataset.DatasetProvider([cfg.get('data', 'train'),
-                             cfg.get('data', 'test')])
+  # learn alphabet from training examples
+  dataset = dataset.DatasetProvider(cfg.get('data', 'train'))
   # now load training examples and labels
   train_x, train_y = dataset.load(cfg.get('data', 'train'))
+  maxlen = max([len(seq) for seq in train_x])
   # now load test examples and labels
-  test_x, test_y = dataset.load(cfg.get('data', 'test'))
+  test_x, test_y = dataset.load(cfg.get('data', 'test'), maxlen=maxlen)
   
   init_vectors = None
   # TODO: what what are we doing for index 0 (oov words)?
@@ -57,7 +56,6 @@ if __name__ == "__main__":
   
   # turn x and y into numpy array among other things
   classes = len(set(train_y))
-  maxlen = max([len(seq) for seq in train_x + test_x])
   train_x = pad_sequences(train_x, maxlen=maxlen)
   train_y = to_categorical(np.array(train_y), classes)  
   test_x = pad_sequences(test_x, maxlen=maxlen)
