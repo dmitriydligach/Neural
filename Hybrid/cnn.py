@@ -38,13 +38,13 @@ if __name__ == "__main__":
   print 'dropout:', cfg.get('cnn', 'dropout')
   print 'learnrt:', cfg.get('cnn', 'learnrt')
 
-  # learn alphabet from training examples
+  # learn alphabets from training examples
   dataset = dataset.DatasetProvider(cfg.get('data', 'train'))
   # now load training examples and labels
-  train_x, train_y = dataset.load(cfg.get('data', 'train'))
-  maxlen = max([len(seq) for seq in train_x])
+  train_x1, train_x2, train_y = dataset.load(cfg.get('data', 'train'))
+  maxlen = max([len(seq) for seq in train_x1])
   # now load test examples and labels
-  test_x, test_y = dataset.load(cfg.get('data', 'test'), maxlen=maxlen)
+  test_x1, test_x2, test_y = dataset.load(cfg.get('data', 'test'), maxlen=maxlen)
   
   init_vectors = None
   # TODO: what what are we doing for index 0 (oov words)?
@@ -56,14 +56,18 @@ if __name__ == "__main__":
   
   # turn x and y into numpy array among other things
   classes = len(set(train_y))
-  train_x = pad_sequences(train_x, maxlen=maxlen)
+  train_x1 = pad_sequences(train_x1, maxlen=maxlen)
+  train_x2 = pad_sequences(train_x2, maxlen=maxlen)
   train_y = to_categorical(np.array(train_y), classes)  
-  test_x = pad_sequences(test_x, maxlen=maxlen)
+  test_x1 = pad_sequences(test_x1, maxlen=maxlen)
+  test_x2 = pad_sequences(test_x2, maxlen=maxlen)
   test_y = to_categorical(np.array(test_y), classes)  
 
-  print 'train_x shape:', train_x.shape
+  print 'train_x1 shape:', train_x1.shape
+  print 'train_x2 shape:', train_x2.shape
   print 'train_y shape:', train_y.shape
-  print 'test_x shape:', test_x.shape
+  print 'test_x1 shape:', test_x1.shape
+  print 'test_x2 shape:', test_x2.shape
   print 'test_y shape:', test_y.shape, '\n'
 
   branches = [] # models to be merged
@@ -73,8 +77,8 @@ if __name__ == "__main__":
   for filter_len in cfg.get('cnn', 'filtlen').split(','):
 
     branch = Sequential()
-    branch.add(Embedding(len(dataset.word2int),
-                         cfg.getint('cnn', 'embdims'),
+    branch.add(Embedding(input_dim=len(dataset.word2int),
+                         output_dim=cfg.getint('cnn', 'embdims'),
                          input_length=maxlen,
                          weights=init_vectors)) 
     branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
@@ -86,9 +90,28 @@ if __name__ == "__main__":
     branch.add(Flatten())
 
     branches.append(branch)
-    train_xs.append(train_x)
-    test_xs.append(test_x)
+    train_xs.append(train_x1)
+    test_xs.append(test_x1)
 
+  for filter_len in cfg.get('cnn', 'filtlen').split(','):
+
+    branch = Sequential()
+    branch.add(Embedding(input_dim=len(dataset.word2int),
+                         output_dim=cfg.getint('cnn', 'embdims'),
+                         input_length=maxlen,
+                         weights=init_vectors)) 
+    branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
+                             filter_length=int(filter_len),
+                             border_mode='valid',
+                             activation='relu',
+                             subsample_length=1))
+    branch.add(MaxPooling1D(pool_length=2))
+    branch.add(Flatten())
+
+    branches.append(branch)
+    train_xs.append(train_x2)
+    test_xs.append(test_x2)
+    
   model = Sequential()
   model.add(Merge(branches, mode='concat'))
   
