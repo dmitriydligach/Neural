@@ -1,0 +1,153 @@
+=== DocTimeRel Relation ===
+
+# CNN / Watermelon / GPU
+
+train: /home/dima/Data/Thyme/Deep/DocTimeRel/train.txt
+test: /home/dima/Data/Thyme/Deep/DocTimeRel/dev.txt
+batches: 50
+epochs: 5
+embdims: 300
+filters: 200
+filtlen: 2,3,4,5
+hidden: 250
+dropout: 0.5
+learnrt: 0.0001
+train_x shape: (38933, 27)
+train_y shape: (38933, 4)
+test_x shape: (20974, 27)
+test_y shape: (20974, 4)
+
+Train on 35039 samples, validate on 3894 samples
+Epoch 1/5
+35039/35039 [==============================] - 37s - loss: 0.9204 - acc: 0.6204 - val_loss: 0.6439 - val_acc: 0.7643
+Epoch 2/5
+35039/35039 [==============================] - 37s - loss: 0.6001 - acc: 0.7821 - val_loss: 0.5227 - val_acc: 0.7976
+Epoch 3/5
+35039/35039 [==============================] - 37s - loss: 0.4893 - acc: 0.8267 - val_loss: 0.4981 - val_acc: 0.8028
+Epoch 4/5
+35039/35039 [==============================] - 37s - loss: 0.4232 - acc: 0.8525 - val_loss: 0.4732 - val_acc: 0.8164
+Epoch 5/5
+35039/35039 [==============================] - 37s - loss: 0.3741 - acc: 0.8745 - val_loss: 0.4669 - val_acc: 0.8241
+labels: {'before/overlap': 0, 'overlap': 2, 'after': 1, 'before': 3}
+f1s =  [ 0.53781513  0.757993    0.8414892   0.82110003]
+
+=== Event-Time Relations ===
+
+# CNN / Mac / CPU
+
+ctakes result:
+
+P      R  F1  #gold #system #correct
+0.740  0.621  0.675 2462    2066  1528  OVERALL
+
+out-of-ctakes result:
+
+/Users/Dima/Git/Deep/Relations/>cnn.py et.cfg
+Using Theano backend.
+train: /Users/Dima/Loyola/Data/Thyme/Deep/EventTime/train.txt
+test: /Users/Dima/Loyola/Data/Thyme/Deep/EventTime/dev.txt
+batch: 50
+epochs: 3
+embdims: 300
+filters: 200
+filtlen: 3,4,5
+hidden: 250
+dropout: 0.25
+learnrt: 0.0001
+train_x shape: (18145, 190)
+train_y shape: (18145, 3)
+test_x shape: (9902, 190)
+test_y shape: (9902, 3)
+
+f1(contains average) = 0.670327349525
+
+# CNN / Watermelon / GPU
+
+train: /home/dima/Data/Thyme/Deep/EventTime/train.txt
+test: /home/dima/Data/Thyme/Deep/EventTime/dev.txt
+batches: 50
+epochs: 3
+embdims: 300
+filters: 200
+filtlen: 3,4,5
+dropout: 0.25
+learnrt: 0.0001
+
+f1 for contains: 0.702775119617
+all f1s: [ 0.89402565  0.70724191  0.        ]
+
+# CNN / Watermelon / CPU
+
+params as above
+f1 for contains: 0.686253484881
+all f1s: [ 0.90350703  0.69114471  0.        ]
+
+# CNN / Mac / CPU / Tensorflow
+
+f1 for contains: 0.711401182949
+all f1s: [ 0.90544259  0.71622177  0.        ]
+
+# LSTM / Watermelon / GPU
+
+train: /home/dima/Data/Thyme/Deep/EventTime/train.txt
+test: /home/dima/Data/Thyme/Deep/EventTime/dev.txt
+batches: 50
+epochs: 3
+embdims: 300
+dropout: 0.25
+learnrt: 0.001
+
+f1 for contains: 0.662850132897
+all f1s: [ 0.88969356  0.66735282  0.        ]
+
+# LSTM / Watermelon / CPU
+
+params as above
+f1 for contains: 0.666341780377
+all f1s: [ 0.85052755  0.66971578  0.05882353]
+
+# ClearTK system
+
+P R F1  #gold #system #correct
+0.428   0.636 0.511   2920  4339  1856  OVERALL
+0.162   0.269 0.202   78    130   21    BEFORE
+0.419   0.313 0.359   83    62    26    BEGINS-ON
+0.582   0.685 0.630   2448  2883  1678  CONTAINS
+0.532   0.352 0.424   71    47    25    ENDS-ON
+0.087   0.442 0.146   240   1217  106   OVERLAP
+
+=== Event-Event Relations  ====
+
+# Experiments with CNN with contain
+
+Getting f1 for contains: 0.55186440678
+all scores: [ 0.9728062   0.55186441  0.        ]
+
+On WM GPU with these settings:
+
+batches = 50
+epochs = 3
+embdims = 300
+filters = 100
+filtlen = 2,3,4
+dropout = 0.25
+learnrt = 0.0001
+
+# Experiments with LSTM with contains/contains-1
+
+Getting f1 for contains: 0.539354294155
+all scores: [ 0.97029156  0.53935429  0.10397554]
+
+batches = 50
+epochs = 3
+embdims = 300
+
+# cTAKES system
+
+P	R	F1	#gold	#system	#correct
+0.582	0.554	0.568	2680	2553	1486	OVERALL
+
+System predict relations #: 2553
+# of system relations whose arguments are close: 1538
+Gold relations #: 2680
+# of gold relations whose arguments are close: 1670
