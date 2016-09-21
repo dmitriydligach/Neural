@@ -6,7 +6,7 @@ np.random.seed(1337)
 import sys
 sys.path.append('../Lib/')
 sys.dont_write_bytecode = True
-
+import ConfigParser, os
 import sklearn as sk
 from sklearn.metrics import f1_score
 import keras as k
@@ -20,15 +20,17 @@ from keras.layers.convolutional import Convolution1D, MaxPooling1D
 from keras.layers.embeddings import Embedding
 import dataset
 import word2vec_model
-import ConfigParser
 
 if __name__ == "__main__":
   
   # settings file specified as command-line argument
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
-  print 'train:', cfg.get('data', 'train')
-  print 'test:', cfg.get('data', 'test')  
+  base = os.environ['DATA']
+  train_file = os.path.join(base, cfg.get('data', 'train'))
+  test_file = os.path.join(base, cfg.get('data', 'test'))
+  print 'train:', train_file
+  print 'test:', test_file
   print 'batch:', cfg.get('cnn', 'batch')
   print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
@@ -39,19 +41,20 @@ if __name__ == "__main__":
   print 'learnrt:', cfg.get('cnn', 'learnrt')
 
   # learn alphabet from training examples
-  dataset = dataset.DatasetProvider(cfg.get('data', 'train'))
+  dataset = dataset.DatasetProvider(train_file)
   # now load training examples and labels
-  train_x, train_y = dataset.load(cfg.get('data', 'train'))
+  train_x, train_y = dataset.load(train_file)
   maxlen = max([len(seq) for seq in train_x])
   # now load test examples and labels
-  test_x, test_y = dataset.load(cfg.get('data', 'test'), maxlen=maxlen)
+  test_x, test_y = dataset.load(test_file, maxlen=maxlen)
   
   init_vectors = None
   # TODO: what what are we doing for index 0 (oov words)?
   # use pre-trained word embeddings?
   if cfg.has_option('data', 'embed'):
     print 'embeddings:', cfg.get('data', 'embed')
-    word2vec = word2vec_model.Model(cfg.get('data', 'embed'))
+    embed_file = os.path.join(base, cfg.has_option('data', 'embed'))
+    word2vec = word2vec_model.Model(embed_file)
     init_vectors = [word2vec.select_vectors(dataset.word2int)]
   
   # turn x and y into numpy array among other things
