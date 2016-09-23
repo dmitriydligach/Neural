@@ -26,7 +26,7 @@ if __name__ == "__main__":
   # settings file specified as command-line argument
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
-  base = os.environ['DATA']
+  base = os.environ['DATA_ROOT']
   train_file = os.path.join(base, cfg.get('data', 'train'))
   test_file = os.path.join(base, cfg.get('data', 'test'))
   print 'train:', train_file
