@@ -46,7 +46,7 @@ if __name__ == "__main__":
   train_x1, train_x2, train_y = dataset.load(train_file)
   maxlen = max([len(seq) for seq in train_x1])
   # now load test examples and labels
-  test_x1, test_x2, test_y = dataset.load(cfg.get('data', 'test'), maxlen=maxlen)
+  test_x1, test_x2, test_y = dataset.load(test_file, maxlen=maxlen)
   
   init_vectors = None
   # TODO: what what are we doing for index 0 (oov words)?
