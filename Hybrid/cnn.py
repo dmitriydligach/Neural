@@ -18,17 +18,19 @@ from keras.layers import Merge
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Convolution1D, MaxPooling1D
 from keras.layers.embeddings import Embedding
-import dataset
-import word2vec_model
-import ConfigParser
+import dataset, word2vec_model
+import os, ConfigParser
 
 if __name__ == "__main__":
   
   # settings file specified as command-line argument
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
-  print 'train:', cfg.get('data', 'train')
-  print 'test:', cfg.get('data', 'test')  
+  base = os.environ['DATA_ROOT']
+  train_file = os.path.join(base, cfg.get('data', 'train'))
+  test_file = os.path.join(base, cfg.get('data', 'test'))
+  print 'train:', train_file
+  print 'test:', test_file
   print 'batch:', cfg.get('cnn', 'batch')
   print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
@@ -39,9 +41,9 @@ if __name__ == "__main__":
   print 'learnrt:', cfg.get('cnn', 'learnrt')
 
   # learn alphabets from training examples
-  dataset = dataset.DatasetProvider(cfg.get('data', 'train'))
+  dataset = dataset.DatasetProvider(train_file)
   # now load training examples and labels
-  train_x1, train_x2, train_y = dataset.load(cfg.get('data', 'train'))
+  train_x1, train_x2, train_y = dataset.load(train_file)
   maxlen = max([len(seq) for seq in train_x1])
   # now load test examples and labels
   test_x1, test_x2, test_y = dataset.load(cfg.get('data', 'test'), maxlen=maxlen)
