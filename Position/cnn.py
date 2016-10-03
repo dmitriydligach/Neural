@@ -43,80 +43,65 @@ if __name__ == "__main__":
   # learn alphabets from training examples
   dataset = dataset.DatasetProvider(train_file)
   # now load training examples and labels
-  train_x1, train_x2, train_y = dataset.load(train_file)
+  train_x1, train_x2, train_x3, train_y = dataset.load(train_file)
   maxlen = max([len(seq) for seq in train_x1])
   # now load test examples and labels
-  test_x1, test_x2, test_y = dataset.load(test_file, maxlen=maxlen)
-  
-  init_vectors = None
-  # TODO: what what are we doing for index 0 (oov words)?
-  # use pre-trained word embeddings?
-  if cfg.has_option('data', 'embed'):
-    print 'embeddings:', cfg.get('data', 'embed')
-    word2vec = word2vec_model.Model(cfg.get('data', 'embed'))
-    init_vectors = [word2vec.select_vectors(dataset.word2int)]
+  test_x1, test_x2, test_x3, test_y = dataset.load(test_file, maxlen=maxlen)
   
   # turn x and y into numpy array among other things
   classes = len(set(train_y))
   train_x1 = pad_sequences(train_x1, maxlen=maxlen)
   train_x2 = pad_sequences(train_x2, maxlen=maxlen)
+  train_x3 = pad_sequences(train_x3, maxlen=maxlen)
   train_y = to_categorical(np.array(train_y), classes)  
   test_x1 = pad_sequences(test_x1, maxlen=maxlen)
   test_x2 = pad_sequences(test_x2, maxlen=maxlen)
+  test_x3 = pad_sequences(test_x3, maxlen=maxlen)
   test_y = to_categorical(np.array(test_y), classes)  
 
   print 'train_x1 shape:', train_x1.shape
   print 'train_x2 shape:', train_x2.shape
+  print 'train_x3 shape:', train_x3.shape
   print 'train_y shape:', train_y.shape
   print 'test_x1 shape:', test_x1.shape
   print 'test_x2 shape:', test_x2.shape
+  print 'test_x3 shape:', test_x3.shape
   print 'test_y shape:', test_y.shape, '\n'
 
   branches = [] # models to be merged
   train_xs = [] # train x for each branch 
   test_xs = []  # test x for each branch
-  
-  for filter_len in cfg.get('cnn', 'filtlen').split(','):
 
-    branch = Sequential()
-    branch.add(Embedding(input_dim=len(dataset.word2int),
-                         output_dim=cfg.getint('cnn', 'embdims'),
-                         input_length=maxlen,
-                         weights=init_vectors)) 
-    branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
-                             filter_length=int(filter_len),
-                             border_mode='valid',
-                             activation='relu',
-                             subsample_length=1))
-    branch.add(MaxPooling1D(pool_length=2))
-    branch.add(Flatten())
+  embed1 = Sequential()
+  embed1.add(Embedding(input_dim=len(dataset.word2int),
+                       output_dim=cfg.getint('cnn', 'embdims'),
+                       input_length=maxlen))
+  embed2 = Sequential()
+  embed2.add(Embedding(input_dim=2000,
+                       output_dim=50,
+                       input_length=maxlen))
+  embed3 = Sequential()
+  embed3.add(Embedding(input_dim=2000,
+                       output_dim=50,
+                       input_length=maxlen))
 
-    branches.append(branch)
-    train_xs.append(train_x1)
-    test_xs.append(test_x1)
-
-  for filter_len in cfg.get('cnn', 'filtlen').split(','):
-
-    branch = Sequential()
-    branch.add(Embedding(input_dim=len(dataset.word2int),
-                         output_dim=cfg.getint('cnn', 'embdims'),
-                         input_length=maxlen,
-                         weights=init_vectors)) 
-    branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
-                             filter_length=int(filter_len),
-                             border_mode='valid',
-                             activation='relu',
-                             subsample_length=1))
-    branch.add(MaxPooling1D(pool_length=2))
-    branch.add(Flatten())
-
-    branches.append(branch)
-    train_xs.append(train_x2)
-    test_xs.append(test_x2)
-    
   model = Sequential()
-  model.add(Merge(branches, mode='concat'))
-  
+  model.add(Merge([embed1, embed2, embed3], mode='concat'))
+  model.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
+                          filter_length=2,
+                          border_mode='valid',
+                          activation='relu',
+                          subsample_length=1))
+  model.add(MaxPooling1D(pool_length=2))
+  model.add(Flatten())
+
+  train_xs.append(train_x1)
+  train_xs.append(train_x2)
+  train_xs.append(train_x3)
+  test_xs.append(test_x1)
+  test_xs.append(test_x1)
+  test_xs.append(test_x1)
+
   model.add(Dense(cfg.getint('cnn', 'hidden')))
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
   model.add(Activation('relu'))
