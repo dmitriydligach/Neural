@@ -77,11 +77,11 @@ if __name__ == "__main__":
                        output_dim=cfg.getint('cnn', 'embdims'),
                        input_length=maxlen))
   embed2 = Sequential()
-  embed2.add(Embedding(input_dim=2000,
+  embed2.add(Embedding(input_dim=len(dataset.tdist2int),
                        output_dim=50,
                        input_length=maxlen))
   embed3 = Sequential()
-  embed3.add(Embedding(input_dim=2000,
+  embed3.add(Embedding(input_dim=len(dataset.edist2int),
                        output_dim=50,
                        input_length=maxlen))
 

@@ -11,7 +11,9 @@ class DatasetProvider:
     """Index words by frequency in a file"""
 
     self.word2int = {}  # words indexed by frequency
-    self.label2int = {} # class to int mapping
+    self.tdist2int = {} # distance to time to int map
+    self.edist2int = {} # distance to event to int map
+    self.label2int = {} # class to int map
     
     unigrams = []   # corpus as list
     labels = []     # classes as list
@@ -29,6 +31,20 @@ class DatasetProvider:
     unigram_counts = collections.Counter(unigrams)
     for unigram, count in unigram_counts.most_common():
       self.word2int[unigram] = index
+      index = index + 1
+
+    index = 1 # zero used to encode unknown words
+    self.tdist2int['oov_word'] = 0
+    tdist_counts = collections.Counter(tdistances)
+    for tdist, count in tdist_counts.most_common():
+      self.tdist2int[tdist] = index
+      index = index + 1
+
+    index = 1 # zero used to encode unknown words
+    self.edist2int['oov_word'] = 0
+    edist_counts = collections.Counter(edistances)
+    for edist, count in edist_counts.most_common():
+      self.edist2int[edist] = index
       index = index + 1
 
     index = 0 # index classes
@@ -56,11 +72,17 @@ class DatasetProvider:
 
       tdistance = []
       for dist in tdist.split():
-        tdistance.append(int(dist) + maxdist)
+        if dist in self.tdist2int:
+          tdistance.append(self.tdist2int[dist])
+        else:
+          tdistance.append(self.edist2int['oov_word'])
 
       edistance = []
       for dist in edist.split():
-        edistance.append(int(dist) + maxdist)
+        if dist in self.edist2int:
+          edistance.append(self.edist2int[dist])
+        else:
+          edistance.append(self.edist2int['oov_word'])
         
       # truncate example if it's too long
       # assume distances and examples have same length
@@ -86,4 +108,5 @@ if __name__ == "__main__":
 
   dataset = DatasetProvider(test_file)
   x1, x2, x3, y = dataset.load(test_file)
-  print 'first 10 examples:', x3[:10]
+  print 'first 10 examples:', x2[:10]
+  print 'time dist alphabet len:', len(dataset.tdist2int)
