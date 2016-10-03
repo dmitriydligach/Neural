@@ -99,8 +99,8 @@ if __name__ == "__main__":
   train_xs.append(train_x2)
   train_xs.append(train_x3)
   test_xs.append(test_x1)
-  test_xs.append(test_x1)
-  test_xs.append(test_x1)
+  test_xs.append(test_x2)
+  test_xs.append(test_x3)
 
   model.add(Dense(cfg.getint('cnn', 'hidden')))
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
