@@ -95,8 +95,8 @@ if __name__ == "__main__":
   model = Sequential()
   model.add(Merge(branches, mode='concat'))
   
-  model.add(Dense(cfg.getint('cnn', 'hidden')))
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
+  model.add(Dense(cfg.getint('cnn', 'hidden')))
   model.add(Activation('relu'))
 
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
