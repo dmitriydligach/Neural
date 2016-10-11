@@ -69,10 +69,8 @@ if __name__ == "__main__":
   print 'test_y shape:', test_y.shape, '\n'
 
   branches = [] # models to be merged
-  train_xs_for_embed = [] # train x for each branch 
-  test_xs_for_embed = []  # test x for each branch
-  train_xs = []
-  test_xs = []
+  train_xs = [] # train x for each branch 
+  test_xs = []  # test x for each branch
 
   embed1 = Sequential()
   embed1.add(Embedding(input_dim=len(dataset.word2int),
@@ -87,13 +85,6 @@ if __name__ == "__main__":
                        output_dim=50,
                        input_length=maxlen))
 
-  train_xs_for_embed.append(train_x1)
-  train_xs_for_embed.append(train_x2)
-  train_xs_for_embed.append(train_x3)
-  test_xs_for_embed.append(test_x1)
-  test_xs_for_embed.append(test_x2)
-  test_xs_for_embed.append(test_x3)
-  
   for filter_len in cfg.get('cnn', 'filtlen').split(','):
 
     branch = Sequential()
@@ -107,8 +98,13 @@ if __name__ == "__main__":
     branch.add(Flatten())
 
     branches.append(branch)
-    train_xs.append(train_xs_for_embed)
-    test_xs.append(test_xs_for_embed)
+
+  train_xs.append(train_x1)
+  train_xs.append(train_x2)
+  train_xs.append(train_x3)
+  test_xs.append(test_x1)
+  test_xs.append(test_x2)
+  test_xs.append(test_x3)
 
   model = Sequential()
   model.add(Merge(branches, mode='concat'))
