@@ -72,20 +72,20 @@ if __name__ == "__main__":
   train_xs = [] # train x for each branch 
   test_xs = []  # test x for each branch
 
-  embed1 = Sequential()
-  embed1.add(Embedding(input_dim=len(dataset.word2int),
-                       output_dim=cfg.getint('cnn', 'embdims'),
-                       input_length=maxlen))
-  embed2 = Sequential()
-  embed2.add(Embedding(input_dim=len(dataset.tdist2int),
-                       output_dim=50,
-                       input_length=maxlen))
-  embed3 = Sequential()
-  embed3.add(Embedding(input_dim=len(dataset.edist2int),
-                       output_dim=50,
-                       input_length=maxlen))
-
   for filter_len in cfg.get('cnn', 'filtlen').split(','):
+
+    embed1 = Sequential()
+    embed1.add(Embedding(input_dim=len(dataset.word2int),
+                         output_dim=cfg.getint('cnn', 'embdims'),
+                         input_length=maxlen))
+    embed2 = Sequential()
+    embed2.add(Embedding(input_dim=len(dataset.tdist2int),
+                         output_dim=50,
+                         input_length=maxlen))
+    embed3 = Sequential()
+    embed3.add(Embedding(input_dim=len(dataset.edist2int),
+                         output_dim=50,
+                         input_length=maxlen))
 
     branch = Sequential()
     branch.add(Merge([embed1, embed2, embed3], mode='concat'))
@@ -99,12 +99,12 @@ if __name__ == "__main__":
 
     branches.append(branch)
 
-  train_xs.append(train_x1)
-  train_xs.append(train_x2)
-  train_xs.append(train_x3)
-  test_xs.append(test_x1)
-  test_xs.append(test_x2)
-  test_xs.append(test_x3)
+    train_xs.append(train_x1)
+    train_xs.append(train_x2)
+    train_xs.append(train_x3)
+    test_xs.append(test_x1)
+    test_xs.append(test_x2)
+    test_xs.append(test_x3)
 
   model = Sequential()
   model.add(Merge(branches, mode='concat'))
