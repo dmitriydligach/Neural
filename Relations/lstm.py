@@ -17,15 +17,18 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.embeddings import Embedding
 from keras.layers import LSTM
+import ConfigParser, os
 import dataset
-import ConfigParser
 
 if __name__ == "__main__":
 
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
-  print 'train:', cfg.get('data', 'train')
-  print 'test:', cfg.get('data', 'test')
+  base = os.environ['DATA_ROOT']
+  train_file = os.path.join(base, cfg.get('data', 'train'))
+  test_file = os.path.join(base, cfg.get('data', 'test'))
+  print 'train:', train_file
+  print 'test:', test_file
   print 'batch:', cfg.get('lstm', 'batch')
   print 'epochs:', cfg.get('lstm', 'epochs')
   print 'embdims:', cfg.get('lstm', 'embdims')
@@ -36,12 +39,12 @@ if __name__ == "__main__":
   print 'learnrt:', cfg.get('lstm', 'learnrt')
   
   # learn alphabet from training examples
-  dataset = dataset.DatasetProvider(cfg.get('data', 'train'))
+  dataset = dataset.DatasetProvider(train_file)
   # now load training examples and labels
-  train_x, train_y = dataset.load(cfg.get('data', 'train'))
+  train_x, train_y = dataset.load(train_file)
   maxlen = max([len(seq) for seq in train_x])
   # now load test examples and labels
-  test_x, test_y = dataset.load(cfg.get('data', 'test'), maxlen=maxlen)
+  test_x, test_y = dataset.load(test_file, maxlen=maxlen)
 
   # turn x and y into numpy array among other things
   classes = len(set(train_y))
