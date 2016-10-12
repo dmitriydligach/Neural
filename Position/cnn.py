@@ -74,14 +74,17 @@ if __name__ == "__main__":
 
   for filter_len in cfg.get('cnn', 'filtlen').split(','):
 
+    # token embeddings
     embed1 = Sequential()
     embed1.add(Embedding(input_dim=len(dataset.word2int),
                          output_dim=cfg.getint('cnn', 'embdims'),
                          input_length=maxlen))
+    # distance to timex position embeddings
     embed2 = Sequential()
     embed2.add(Embedding(input_dim=len(dataset.tdist2int),
                          output_dim=50,
                          input_length=maxlen))
+    # distance to event position embeddings
     embed3 = Sequential()
     embed3.add(Embedding(input_dim=len(dataset.edist2int),
                          output_dim=50,
@@ -108,9 +111,9 @@ if __name__ == "__main__":
 
   model = Sequential()
   model.add(Merge(branches, mode='concat'))
-    
-  model.add(Dense(cfg.getint('cnn', 'hidden')))
+
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
+  model.add(Dense(cfg.getint('cnn', 'hidden')))
   model.add(Activation('relu'))
 
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
