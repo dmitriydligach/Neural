@@ -52,27 +52,13 @@ class DatasetProvider:
     
     for line in open(path):
       label, left, middle, right = line.strip().split('|')
+
       lefts.append(convert_to_ints(left, self.left2int, left_maxlen))
       middles.append(convert_to_ints(middle, self.middle2int, middle_maxlen))
       rights.append(convert_to_ints(right, self.right2int, right_maxlen))
       labels.append(self.label2int[label])
 
     return lefts, middles, rights, labels
-
-def convert_to_ints(text, alphabet, maxlen=float('inf')):
-  """Turn text into a sequence of integers"""
-  
-  result = []
-  for token in text.split():
-    if token in alphabet:
-      result.append(alphabet[token])
-    else:
-      result.append(alphabet['oov_word'])
-      
-  if len(result) > maxlen:
-    return result[0:maxlen]
-  else:
-    return result
 
 def make_alphabet(tokens):
   """Map tokens to integers sorted by frequency"""
@@ -87,6 +73,21 @@ def make_alphabet(tokens):
     index = index + 1
     
   return token2int
+  
+def convert_to_ints(text, alphabet, maxlen=float('inf')):
+  """Turn text into a sequence of integers"""
+  
+  result = []
+  for token in text.split():
+    if token in alphabet:
+      result.append(alphabet[token])
+    else:
+      result.append(alphabet['oov_word'])
+      
+  if len(result) > maxlen:
+    return result[0:maxlen]
+  else:
+    return result
   
 if __name__ == "__main__":
   

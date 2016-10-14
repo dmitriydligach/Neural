@@ -43,29 +43,34 @@ if __name__ == "__main__":
   # learn alphabets from training examples
   dataset = dataset.DatasetProvider(train_file)
   # now load training examples and labels
-  train_x1, train_x2, train_x3, train_y = dataset.load(train_file)
-  maxlen = max([len(seq) for seq in train_x1])
+  train_left, train_middle, train_right, train_y = dataset.load(train_file)
+  left_maxlen = max([len(seq) for seq in train_left])
+  middle_maxlen = max([len(seq) for seq in train_middle])
+  right_maxlen = max([len(seq) for seq in train_right])
+
   # now load test examples and labels
-  test_x1, test_x2, test_x3, test_y = dataset.load(test_file, maxlen=maxlen)
+  test_left, test_middle, test_right, test_y = \
+    dataset.load(test_file, left_maxlen=left_maxlen,
+                 middle_maxlen=middle_maxlen, right_maxlen=right_maxlen)
   
   # turn x and y into numpy array among other things
   classes = len(set(train_y))
-  train_x1 = pad_sequences(train_x1, maxlen=maxlen)
-  train_x2 = pad_sequences(train_x2, maxlen=maxlen)
-  train_x3 = pad_sequences(train_x3, maxlen=maxlen)
+  train_left = pad_sequences(train_left, maxlen=left_maxlen)
+  train_middle = pad_sequences(train_middle, maxlen=middle_maxlen)
+  train_right = pad_sequences(train_right, maxlen=right_maxlen)
   train_y = to_categorical(np.array(train_y), classes)  
-  test_x1 = pad_sequences(test_x1, maxlen=maxlen)
-  test_x2 = pad_sequences(test_x2, maxlen=maxlen)
-  test_x3 = pad_sequences(test_x3, maxlen=maxlen)
+  test_left = pad_sequences(test_left, maxlen=left_maxlen)
+  test_middle = pad_sequences(test_middle, maxlen=middle_maxlen)
+  test_right = pad_sequences(test_right, maxlen=right_maxlen)
   test_y = to_categorical(np.array(test_y), classes)  
 
-  print 'train_x1 shape:', train_x1.shape
-  print 'train_x2 shape:', train_x2.shape
-  print 'train_x3 shape:', train_x3.shape
+  print 'train_left shape:', train_left.shape
+  print 'train_middle shape:', train_middle.shape
+  print 'train_right shape:', train_right.shape
   print 'train_y shape:', train_y.shape
-  print 'test_x1 shape:', test_x1.shape
-  print 'test_x2 shape:', test_x2.shape
-  print 'test_x3 shape:', test_x3.shape
+  print 'test_left shape:', test_left.shape
+  print 'test_middle shape:', test_middle.shape
+  print 'test_right shape:', test_right.shape
   print 'test_y shape:', test_y.shape, '\n'
 
   branches = [] # models to be merged
@@ -74,24 +79,10 @@ if __name__ == "__main__":
 
   for filter_len in cfg.get('cnn', 'filtlen').split(','):
 
-    # token embeddings
-    embed1 = Sequential()
-    embed1.add(Embedding(input_dim=len(dataset.word2int),
-                         output_dim=cfg.getint('cnn', 'embdims'),
-                         input_length=maxlen))
-    # distance to timex position embeddings
-    embed2 = Sequential()
-    embed2.add(Embedding(input_dim=len(dataset.tdist2int),
-                         output_dim=50,
-                         input_length=maxlen))
-    # distance to event position embeddings
-    embed3 = Sequential()
-    embed3.add(Embedding(input_dim=len(dataset.edist2int),
-                         output_dim=50,
-                         input_length=maxlen))
-
     branch = Sequential()
-    branch.add(Merge([embed1, embed2, embed3], mode='concat'))
+    branch.add(Embedding(input_dim=len(dataset.left2int),
+                         output_dim=cfg.getint('cnn', 'embdims'),
+                         input_length=left_maxlen))
     branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
                              filter_length=int(filter_len),
                              border_mode='valid',
@@ -101,13 +92,44 @@ if __name__ == "__main__":
     branch.add(Flatten())
 
     branches.append(branch)
+    train_xs.append(train_left)
+    test_xs.append(test_left)
 
-    train_xs.append(train_x1)
-    train_xs.append(train_x2)
-    train_xs.append(train_x3)
-    test_xs.append(test_x1)
-    test_xs.append(test_x2)
-    test_xs.append(test_x3)
+  for filter_len in cfg.get('cnn', 'filtlen').split(','):
+
+    branch = Sequential()
+    branch.add(Embedding(input_dim=len(dataset.middle2int),
+                         output_dim=cfg.getint('cnn', 'embdims'),
+                         input_length=middle_maxlen))
+    branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
+                             filter_length=int(filter_len),
+                             border_mode='valid',
+                             activation='relu',
+                             subsample_length=1))
+    branch.add(MaxPooling1D(pool_length=2))
+    branch.add(Flatten())
+
+    branches.append(branch)
+    train_xs.append(train_middle)
+    test_xs.append(test_middle)
+
+  for filter_len in cfg.get('cnn', 'filtlen').split(','):
+
+    branch = Sequential()
+    branch.add(Embedding(input_dim=len(dataset.right2int),
+                         output_dim=cfg.getint('cnn', 'embdims'),
+                         input_length=right_maxlen))
+    branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
+                             filter_length=int(filter_len),
+                             border_mode='valid',
+                             activation='relu',
+                             subsample_length=1))
+    branch.add(MaxPooling1D(pool_length=2))
+    branch.add(Flatten())
+
+    branches.append(branch)
+    train_xs.append(train_right)
+    test_xs.append(test_right)
 
   model = Sequential()
   model.add(Merge(branches, mode='concat'))
