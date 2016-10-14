@@ -8,109 +8,85 @@ class DatasetProvider:
   """THYME relation data"""
     
   def __init__(self, path):
-    """Index words by frequency in a file"""
+    """Make alphabets"""
 
-    self.word2int = {}  # words indexed by frequency
-    self.tdist2int = {} # distance to time to int map
-    self.edist2int = {} # distance to event to int map
-    self.label2int = {} # class to int map
+    # various alphabets
+    self.label2int = {}
+    self.left2int = {}
+    self.middle2int = {}
+    self.right2int = {}
+
+    labels = []  # classes as list
+    lefts = []   # left regions
+    middles = [] # middle regions
+    rights = []  # right regions
     
-    unigrams = []   # corpus as list
-    labels = []     # classes as list
-    tdistances = [] # distance to time
-    edistances = [] # distance to event
     for line in open(path):
-      label, text, tdist, edist = line.strip().split('|')
+      label, left, middle, right = line.strip().split('|')
       labels.append(label)
-      unigrams.extend(text.split())
-      tdistances.extend(tdist.split())
-      edistances.extend(edist.split())
-        
-    index = 1 # zero used to encode unknown words
-    self.word2int['oov_word'] = 0
-    unigram_counts = collections.Counter(unigrams)
-    for unigram, count in unigram_counts.most_common():
-      self.word2int[unigram] = index
-      index = index + 1
+      lefts.extend(left.split())
+      middles.extend(middle.split())
+      rights.extend(right.split())
 
-    index = 1 # zero used to encode unknown words
-    self.tdist2int['oov_word'] = 0
-    tdist_counts = collections.Counter(tdistances)
-    for tdist, count in tdist_counts.most_common():
-      self.tdist2int[tdist] = index
-      index = index + 1
-
-    index = 1 # zero used to encode unknown words
-    self.edist2int['oov_word'] = 0
-    edist_counts = collections.Counter(edistances)
-    for edist, count in edist_counts.most_common():
-      self.edist2int[edist] = index
-      index = index + 1
+    self.left2int = make_alphabet(lefts)
+    self.left2int['oov_word'] = 0
+    self.middle2int = make_alphabet(middles)
+    self.middle2int['oov_word'] = 0
+    self.right2int = make_alphabet(rights)
+    self.right2int['oov_word'] = 0
 
     index = 0 # index classes
     for label in set(labels):
       self.label2int[label] = index
       index = index + 1
-
-  def load(self, path, maxlen=float('inf'), maxdist=1000):
+      
+  def load(self, path, left_maxlen=float('inf'),
+             middle_maxlen=float('inf'), right_maxlen=float('inf')):
     """Convert sentences (examples) into lists of indices"""
 
-    examples = []   # sequences of words as ints
-    tdistances = [] # distances to timex as ints
-    edistances = [] # distances to event as ints
-    labels = []     # labels
-
+    # lists of int sequences
+    lefts = []
+    middles = []
+    rights = []
+    labels = []
+    
     for line in open(path):
-      label, text, tdist, edist = line.strip().split('|')
-
-      example = []
-      for unigram in text.split():
-        if unigram in self.word2int:
-          example.append(self.word2int[unigram])
-        else:
-          example.append(self.word2int['oov_word'])
-
-      tdistance = []
-      for dist in tdist.split():
-        if dist in self.tdist2int:
-          tdistance.append(self.tdist2int[dist])
-        else:
-          tdistance.append(self.edist2int['oov_word'])
-
-      edistance = []
-      for dist in edist.split():
-        if dist in self.edist2int:
-          edistance.append(self.edist2int[dist])
-        else:
-          edistance.append(self.edist2int['oov_word'])
-        
-      # truncate example if it's too long
-      # assume distances and examples have same length
-      if len(example) > maxlen:
-        example = example[0:maxlen]
-        tdistance = tdistance[0:maxlen]
-        edistance = edistance[0:maxlen]
-
-      examples.append(example)
-      tdistances.append(tdistance)
-      edistances.append(edistance)
+      label, left, middle, right = line.strip().split('|')
+      lefts.append(convert_to_ints(left, self.left2int, left_maxlen))
+      middles.append(convert_to_ints(middle, self.middle2int, middle_maxlen))
+      rights.append(convert_to_ints(right, self.right2int, right_maxlen))
       labels.append(self.label2int[label])
 
-    return examples, tdistances, edistances, labels
+    return lefts, middles, rights, labels
 
-  def make_alphabet(self, tokens):
-    """Map tokens to integers sorted by frequency"""
+def convert_to_ints(text, alphabet, maxlen=float('inf')):
+  """Turn text into a sequence of integers"""
+  
+  result = []
+  for token in text.split():
+    if token in alphabet:
+      result.append(alphabet[token])
+    else:
+      result.append(alphabet['oov_word'])
+      
+  if len(result) > maxlen:
+    return result[0:maxlen]
+  else:
+    return result
 
-    token2int = {} # key: token, value: int
-    index = 1 # start from 1 (zero reserved)
-
-    # tokens will be indexed by frequency
-    counts = collections.Counter(tokens)
-    for token, count in counts.most_common():
-      token2int[token] = index
-      index = index + 1
-
-    return token2int
+def make_alphabet(tokens):
+  """Map tokens to integers sorted by frequency"""
+  
+  token2int = {} # key: token, value: int
+  index = 1 # start from 1 (zero reserved)
+  
+  # tokens will be indexed by frequency
+  counts = collections.Counter(tokens)
+  for token, count in counts.most_common():
+    token2int[token] = index
+    index = index + 1
+    
+  return token2int
   
 if __name__ == "__main__":
   
@@ -123,8 +99,11 @@ if __name__ == "__main__":
   dataset = DatasetProvider(test_file)
   x1, x2, x3, y = dataset.load(test_file)
   print 'first 10 examples:', x2[:10]
-  print 'time dist alphabet len:', len(dataset.tdist2int)
+  print 'time dist alphabet len:', len(dataset.left2int)
 
   l = ['one', 'two', 'three', 'one', 'four', 'three', 'one']
   print 'corpus:', l
-  print 'alphabet:', dataset.make_alphabet(l)
+  alphabet = make_alphabet(l)
+  print 'alphabet:', alphabet
+  print 'int sequence:', convert_to_ints('one two', alphabet)
+  
