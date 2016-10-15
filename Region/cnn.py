@@ -43,33 +43,47 @@ if __name__ == "__main__":
   # learn alphabets from training examples
   dataset = dataset.DatasetProvider(train_file)
   # now load training examples and labels
-  train_left, train_middle, train_right, train_y = dataset.load(train_file)
+  train_left, train_larg, train_middle, \
+    train_rarg, train_right, train_y = dataset.load(train_file)
   left_maxlen = max([len(seq) for seq in train_left])
+  larg_maxlen = max([len(seq) for seq in train_larg])
   middle_maxlen = max([len(seq) for seq in train_middle])
+  rarg_maxlen = max([len(seq) for seq in train_rarg])
   right_maxlen = max([len(seq) for seq in train_right])
 
   # now load test examples and labels
-  test_left, test_middle, test_right, test_y = \
-    dataset.load(test_file, left_maxlen=left_maxlen,
-                 middle_maxlen=middle_maxlen, right_maxlen=right_maxlen)
+  test_left, test_larg, test_middle, test_rarg, test_right, test_y = \
+    dataset.load(test_file, left_maxlen=left_maxlen, larg_maxlen=larg_maxlen,
+                 middle_maxlen=middle_maxlen, rarg_maxlen=rarg_maxlen,
+                 right_maxlen=right_maxlen)
   
   # turn x and y into numpy array among other things
   classes = len(set(train_y))
   train_left = pad_sequences(train_left, maxlen=left_maxlen)
+  train_larg = pad_sequences(train_larg, maxlen=larg_maxlen)
   train_middle = pad_sequences(train_middle, maxlen=middle_maxlen)
+  train_rarg = pad_sequences(train_rarg, maxlen=rarg_maxlen)
   train_right = pad_sequences(train_right, maxlen=right_maxlen)
   train_y = to_categorical(np.array(train_y), classes)  
+
   test_left = pad_sequences(test_left, maxlen=left_maxlen)
+  test_larg = pad_sequences(test_larg, maxlen=larg_maxlen)
   test_middle = pad_sequences(test_middle, maxlen=middle_maxlen)
+  test_rarg = pad_sequences(test_rarg, maxlen=rarg_maxlen)
   test_right = pad_sequences(test_right, maxlen=right_maxlen)
   test_y = to_categorical(np.array(test_y), classes)  
 
   print 'train_left shape:', train_left.shape
+  print 'train_larg shape:', train_larg.shape
   print 'train_middle shape:', train_middle.shape
+  print 'train_rarg shape:', train_rarg.shape
   print 'train_right shape:', train_right.shape
   print 'train_y shape:', train_y.shape
+  
   print 'test_left shape:', test_left.shape
+  print 'test_larg shape:', test_larg.shape
   print 'test_middle shape:', test_middle.shape
+  print 'test_rarg shape:', test_rarg.shape
   print 'test_right shape:', test_right.shape
   print 'test_y shape:', test_y.shape, '\n'
 
@@ -98,6 +112,24 @@ if __name__ == "__main__":
   for filter_len in cfg.get('cnn', 'filtlen').split(','):
 
     branch = Sequential()
+    branch.add(Embedding(input_dim=len(dataset.larg2int),
+                         output_dim=cfg.getint('cnn', 'embdims'),
+                         input_length=larg_maxlen))
+    branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
+                             filter_length=int(filter_len),
+                             border_mode='valid',
+                             activation='relu',
+                             subsample_length=1))
+    branch.add(MaxPooling1D(pool_length=2))
+    branch.add(Flatten())
+
+    branches.append(branch)
+    train_xs.append(train_larg)
+    test_xs.append(test_larg)
+    
+  for filter_len in cfg.get('cnn', 'filtlen').split(','):
+
+    branch = Sequential()
     branch.add(Embedding(input_dim=len(dataset.middle2int),
                          output_dim=cfg.getint('cnn', 'embdims'),
                          input_length=middle_maxlen))
@@ -113,6 +145,24 @@ if __name__ == "__main__":
     train_xs.append(train_middle)
     test_xs.append(test_middle)
 
+  for filter_len in cfg.get('cnn', 'filtlen').split(','):
+
+    branch = Sequential()
+    branch.add(Embedding(input_dim=len(dataset.rarg2int),
+                         output_dim=cfg.getint('cnn', 'embdims'),
+                         input_length=rarg_maxlen))
+    branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
+                             filter_length=int(filter_len),
+                             border_mode='valid',
+                             activation='relu',
+                             subsample_length=1))
+    branch.add(MaxPooling1D(pool_length=2))
+    branch.add(Flatten())
+
+    branches.append(branch)
+    train_xs.append(train_rarg)
+    test_xs.append(test_rarg)
+    
   for filter_len in cfg.get('cnn', 'filtlen').split(','):
 
     branch = Sequential()
