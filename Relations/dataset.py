@@ -3,7 +3,7 @@
 import numpy as np
 import sys
 sys.dont_write_bytecode = True
-import ConfigParser
+import ConfigParser, os
 import glob, string, collections, operator
 
 class DatasetProvider:
@@ -62,14 +62,17 @@ if __name__ == "__main__":
 
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
+  base = os.environ['DATA_ROOT']
+  train_file = os.path.join(base, cfg.get('data', 'train'))
+  test_file = os.path.join(base, cfg.get('data', 'test'))
 
-  dataset = DatasetProvider(cfg.get('data', 'train'))
+  dataset = DatasetProvider(train_file)
   print 'alphabet size:', len(dataset.word2int)
 
-  x,y = dataset.load(cfg.get('data', 'train'))
+  x,y = dataset.load(train_file)
   print 'train max seq len:', max([len(s) for s in x])
   
-  x,y = dataset.load(cfg.get('data', 'test'), maxlen=10)
+  x,y = dataset.load(test_file, maxlen=10)
   print 'number of examples:', len(x)
   print 'test max seq len:', max([len(s) for s in x])
   print 'labels:', dataset.label2int
