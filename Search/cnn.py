@@ -129,13 +129,13 @@ def run(train_file,
     idxs = [datset.label2int['contains'], datset.label2int['contains-1']]
     contains_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
     print '\nf1(contains average) =', contains_f1
-    return contains_f1
   else:
     idxs = datset.label2int.values()
     average_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
     print 'f1(all) =', average_f1
-    return average_f1
 
+  print '\n***************************************************************\n'
+  
 if __name__ == "__main__":
 
   cfg = ConfigParser.ConfigParser()
