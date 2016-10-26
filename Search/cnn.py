@@ -59,11 +59,6 @@ def run(train_file,
   test_x = pad_sequences(test_x, maxlen=maxlen)
   test_y = to_categorical(np.array(test_y), classes)  
 
-  print 'train_x shape:', train_x.shape
-  print 'train_y shape:', train_y.shape
-  print 'test_x shape:', test_x.shape
-  print 'test_y shape:', test_y.shape, '\n'
-
   branches = [] # models to be merged
   train_xs = [] # train x for each branch 
   test_xs = []  # test x for each branch
@@ -160,12 +155,12 @@ if __name__ == "__main__":
         learnrt=cfg.getfloat('cnn', 'learnrt'))
 
   else:
-    epochs_list = [3,4,5]
-    filters_list = [100, 200, 300]
-    filtlen_list = ['2,3', '2,3,4', '2,3,4,5']
-    hidden_list = [100, 200, 300]
+    epochs_list = [3,4,5,10]
+    filters_list = [50, 100, 200, 300, 500]
+    filtlen_list = ['2,3', '2,3,4', '3,4', '3,4,5', '2,3,4,5']
+    hidden_list = [50, 100, 200, 300, 500]
     dropout_list = [0.25, 0.5]
-    learnrt_list = [0.1, 0.001, 0.0001]
+    learnrt_list = [0.001, 0.0001]
   
     for epochs in epochs_list:
       for filters in filters_list:
