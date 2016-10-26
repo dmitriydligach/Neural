@@ -101,7 +101,7 @@ def run(train_file,
             train_y,
             nb_epoch=epochs,
             batch_size=batch,
-            verbose=1,
+            verbose=0,
             validation_split=0.1,
             class_weight=None)
 
@@ -129,7 +129,7 @@ def run(train_file,
     average_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
     print 'f1(all) =', average_f1
 
-  print '\n***************************************************************\n'
+  print '******************************************'
   
 if __name__ == "__main__":
 
@@ -155,9 +155,9 @@ if __name__ == "__main__":
         learnrt=cfg.getfloat('cnn', 'learnrt'))
 
   else:
-    epochs_list = [3,4,5,10]
+    epochs_list = [3, 4, 5, 10]
     filters_list = [50, 100, 200, 300, 500]
-    filtlen_list = ['2,3', '2,3,4', '3,4', '3,4,5', '2,3,4,5']
+    filtlen_list = ['1,2', '2,3', '3,4', '1,2,3', '2,3,4', '3,4,5', '2,3,4,5']
     hidden_list = [50, 100, 200, 300, 500]
     dropout_list = [0.25, 0.5]
     learnrt_list = [0.001, 0.0001]
