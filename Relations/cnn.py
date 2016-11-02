@@ -22,7 +22,7 @@ import dataset
 import word2vec_model
 
 if __name__ == "__main__":
-
+  
   # settings file specified as command-line argument
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
@@ -47,7 +47,7 @@ if __name__ == "__main__":
   maxlen = max([len(seq) for seq in train_x])
   # now load test examples and labels
   test_x, test_y = dataset.load(test_file, maxlen=maxlen)
-
+  
   init_vectors = None
   # TODO: what what are we doing for index 0 (oov words)?
   # use pre-trained word embeddings?
@@ -56,13 +56,13 @@ if __name__ == "__main__":
     embed_file = os.path.join(base, cfg.has_option('data', 'embed'))
     word2vec = word2vec_model.Model(embed_file)
     init_vectors = [word2vec.select_vectors(dataset.word2int)]
-
+  
   # turn x and y into numpy array among other things
   classes = len(set(train_y))
   train_x = pad_sequences(train_x, maxlen=maxlen)
-  train_y = to_categorical(np.array(train_y), classes)
+  train_y = to_categorical(np.array(train_y), classes)  
   test_x = pad_sequences(test_x, maxlen=maxlen)
-  test_y = to_categorical(np.array(test_y), classes)
+  test_y = to_categorical(np.array(test_y), classes)  
 
   print 'train_x shape:', train_x.shape
   print 'train_y shape:', train_y.shape
@@ -70,18 +70,16 @@ if __name__ == "__main__":
   print 'test_y shape:', test_y.shape, '\n'
 
   branches = [] # models to be merged
-  train_xs = [] # train x for each branch
+  train_xs = [] # train x for each branch 
   test_xs = []  # test x for each branch
-
-  emb_layer = Embedding(len(dataset.word2int),
-                        cfg.getint('cnn', 'embdims'),
-                        input_length=maxlen,
-                        weights=init_vectors)
-
+  
   for filter_len in cfg.get('cnn', 'filtlen').split(','):
 
     branch = Sequential()
-    branch.add(emb_layer)
+    branch.add(Embedding(len(dataset.word2int),
+                         cfg.getint('cnn', 'embdims'),
+                         input_length=maxlen,
+                         weights=init_vectors)) 
     branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
                              filter_length=int(filter_len),
                              border_mode='valid',
@@ -91,13 +89,12 @@ if __name__ == "__main__":
     branch.add(Flatten())
 
     branches.append(branch)
-
-  train_xs.append(train_x)
-  test_xs.append(test_x)
+    train_xs.append(train_x)
+    test_xs.append(test_x)
 
   model = Sequential()
   model.add(Merge(branches, mode='concat'))
-
+  
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
   model.add(Dense(cfg.getint('cnn', 'hidden')))
   model.add(Activation('relu'))
