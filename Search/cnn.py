@@ -33,6 +33,8 @@ def run(train_file,
          learnrt):
   """Train/test with given parameters. Return F1."""
 
+  np.random.seed(1337)
+
   print 'train:', train_file
   print 'test:', test_file
   print 'batch:', batch
@@ -155,11 +157,11 @@ if __name__ == "__main__":
         learnrt=cfg.getfloat('cnn', 'learnrt'))
 
   else:
-    epochs_list = [3, 4, 5, 10]
-    filters_list = [50, 100, 200, 300, 500]
-    filtlen_list = ['1,2', '2,3', '3,4', '1,2,3', '2,3,4', '3,4,5', '2,3,4,5']
-    hidden_list = [50, 100, 200, 300, 500]
-    dropout_list = [0.25, 0.5]
+    epochs_list = [3, 4, 5]
+    filters_list = [300, 400, 500, 1000]
+    filtlen_list = ['2,3', '3,4', '2,3,4', '3,4,5', '2,3,4,5']
+    hidden_list = [300, 400, 500, 1000]
+    dropout_list = [0.25, 0.5, 0.75]
     learnrt_list = [0.001, 0.0001]
   
     for epochs in epochs_list:
