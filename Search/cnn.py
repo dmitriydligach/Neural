@@ -157,12 +157,12 @@ if __name__ == "__main__":
         learnrt=cfg.getfloat('cnn', 'learnrt'))
 
   else:
-    epochs_list = [3, 4, 5]
-    filters_list = [300, 400, 500, 1000]
-    filtlen_list = ['2,3', '3,4', '2,3,4', '3,4,5', '2,3,4,5']
-    hidden_list = [300, 400, 500, 1000]
-    dropout_list = [0.25, 0.5, 0.75]
-    learnrt_list = [0.001, 0.0001]
+    epochs_list = [3, 4, 5, 6]
+    filters_list = [200, 300, 400, 500, 700]
+    filtlen_list = ['2,3,4', '3,4,5', '2,3,4,5']
+    hidden_list = [300, 400, 500, 700, 1000]
+    dropout_list = [0.25, 0.5]
+    learnrt_list = [0.0001]
   
     for epochs in epochs_list:
       for filters in filters_list:
