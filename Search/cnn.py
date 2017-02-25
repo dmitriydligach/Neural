@@ -70,6 +70,7 @@ def run(train_file,
     branch = Sequential()
     branch.add(Embedding(len(datset.word2int),
                          embdims,
+                         trainable=False,
                          input_length=maxlen))
     branch.add(Convolution1D(nb_filter=filters,
                              filter_length=int(filter_len),
@@ -104,7 +105,7 @@ def run(train_file,
             nb_epoch=epochs,
             batch_size=batch,
             verbose=0,
-            validation_split=0.1,
+            validation_split=0.0,
             class_weight=None)
 
   # probability for each class; (test size, num of classes)
@@ -157,10 +158,10 @@ if __name__ == "__main__":
         learnrt=cfg.getfloat('cnn', 'learnrt'))
 
   else:
-    epochs_list = [3, 4, 5, 6]
-    filters_list = [200, 300, 400, 500, 700]
+    epochs_list = [3, 4, 5]
+    filters_list = [200, 300, 400, 500]
     filtlen_list = ['2,3,4', '3,4,5', '2,3,4,5']
-    hidden_list = [300, 400, 500, 700, 1000]
+    hidden_list = [300, 400, 500, 1000]
     dropout_list = [0.25, 0.5]
     learnrt_list = [0.0001]
   

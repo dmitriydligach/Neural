@@ -1,0 +1,2 @@
+nohup cnn.py ee.cfg search >& grid.txt &
+grep "f1(contains average)" grid.txt | cut -d '=' -f 2 | sort -g
