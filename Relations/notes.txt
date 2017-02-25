@@ -4,10 +4,10 @@ embedding layer trainable = True (default):
 f1(contains average) = 0.496519721578
 
 embedding layer trainable = False:
-f1(contains average) = 0.50800090151
+f1(contains average) = 0.515742793792
 
 embedding layer trainable = True (default) and init with mimic:
-f1(contains average) = 0.497868712702
+f1(contains average) = 0.512820512821
 
 embedding layer trainable = False and init with mimic:
-f1(contains average) = 0.52139391266
+f1(contains average) = 0.507533362032
