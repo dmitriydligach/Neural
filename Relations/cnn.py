@@ -53,7 +53,7 @@ if __name__ == "__main__":
   # use pre-trained word embeddings?
   if cfg.has_option('data', 'embed'):
     print 'embeddings:', cfg.get('data', 'embed')
-    embed_file = os.path.join(base, cfg.has_option('data', 'embed'))
+    embed_file = os.path.join(base, cfg.get('data', 'embed'))
     word2vec = word2vec_model.Model(embed_file)
     init_vectors = [word2vec.select_vectors(dataset.word2int)]
 
