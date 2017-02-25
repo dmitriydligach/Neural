@@ -1,0 +1,13 @@
+# Event-event relations
+
+embedding layer trainable = True (default):
+f1(contains average) = 0.496519721578
+
+embedding layer trainable = False:
+f1(contains average) = 0.50800090151
+
+embedding layer trainable = True (default) and init with mimic:
+f1(contains average) = 0.497868712702
+
+embedding layer trainable = False and init with mimic:
+f1(contains average) = 0.52139391266
