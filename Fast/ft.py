@@ -44,7 +44,7 @@ if __name__ == "__main__":
   # learn alphabet from training examples
   dataset = dataset.DatasetProvider(train_file)
   # now load training examples and labels
-  train_x, train_y = dataset.load(train_file, maxlen=15)
+  train_x, train_y = dataset.load(train_file)
   maxlen = max([len(seq) for seq in train_x])
   # now load test examples and labels
   test_x, test_y = dataset.load(test_file, maxlen=maxlen)
