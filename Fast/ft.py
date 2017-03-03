@@ -35,8 +35,6 @@ if __name__ == "__main__":
   print 'batch:', cfg.get('cnn', 'batch')
   print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
-  print 'filters:', cfg.get('cnn', 'filters')
-  print 'filtlen:', cfg.get('cnn', 'filtlen')
   print 'hidden:', cfg.get('cnn', 'hidden')
   print 'dropout:', cfg.get('cnn', 'dropout')
   print 'learnrt:', cfg.get('cnn', 'learnrt')
