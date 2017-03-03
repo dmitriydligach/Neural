@@ -10,14 +10,14 @@ def ngrams(text):
 
   ngram_list = []
 
-  # for unigram in text.split():
-  #   ngram_list.append(unigram)
+  for unigram in text.split():
+    ngram_list.append(unigram)
 
   for bigram_as_list in nltk.bigrams(text.split()):
     ngram_list.append('_'.join(bigram_as_list))
 
-  for trigram_as_list in nltk.trigrams(text.split()):
-    ngram_list.append('_'.join(trigram_as_list))
+  # for trigram_as_list in nltk.trigrams(text.split()):
+    # ngram_list.append('_'.join(trigram_as_list))
 
   return set(ngram_list)
 
