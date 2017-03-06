@@ -1,6 +1,6 @@
 #!/Library/Frameworks/Python.framework/Versions/2.7/bin/python -B
 
-import glob, string, ConfigParser, sys, os, numpy
+import glob, string, ConfigParser, sys, os
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.svm import LinearSVC
@@ -19,7 +19,7 @@ def load_data(path):
     samples.append(text)
     targets.append(target)
 
-  return numpy.array(samples), numpy.array(targets)
+  return samples, targets
 
 def train_and_test(train_file, test_file):
   """Train and test"""
