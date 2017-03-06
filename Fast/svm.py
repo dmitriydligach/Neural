@@ -39,8 +39,9 @@ def train_and_test(train_file, test_file):
   model = classifier.fit(train_tfidf, train_targets)
   predictions = classifier.predict(test_tfidf)
 
-  f1 = f1_score(test_targets, predictions, average=None)
-  print 'f1 =', f1
+  f1 = f1_score(test_targets, predictions,
+           labels=['contains', 'contains-1'], average='micro')
+  print 'f1(contains & contains-1 micro average) = ', f1
 
 if __name__ == "__main__":
 
