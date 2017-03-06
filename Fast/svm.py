@@ -1,71 +1,63 @@
 #!/Library/Frameworks/Python.framework/Versions/2.7/bin/python -B
 
-import numpy as np
-import sklearn as sk
-import sklearn.datasets
-import sklearn.feature_extraction.text
-import sklearn.cross_validation
-import sklearn.svm
-from sklearn.datasets.base import Bunch
-import glob, string
+import glob, string, ConfigParser, sys, os, numpy
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.svm import LinearSVC
+from sklearn.cross_validation import train_test_split
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
 
-PATH = '/Users/Dima/Loyola/Data/RtPolarity/rt-polarity.*'
-NFOLDS = 10
-NGRAMRANGE = (1, 1)
-MINDF = 0
+def load_data(path):
+  """Read data from file; return examples and labels"""
 
-def make_bunch():
-  """Make a Bunch object from raw data"""
-  
   samples = []
   labels = []
-  for file_name in glob.glob(PATH):
-    print 'reading:', file_name
-    with open(file_name) as file:
-      for line in file:
-        printable = ''.join(c for c in line if c in string.printable)
-        samples.append(printable.strip())
-        labels.append(file_name.split('.')[1])
+  for line in open(path):
+    label, text = line.strip().split('|')
+    samples.append(text)
+    labels.append(label)
 
-  return Bunch(data=np.array(samples), target=np.array(labels))
+  return numpy.array(samples), numpy.array(labels)
 
-def run_cross_validation():
-  """Run n-fold CV and return average accuracy"""      
+def train_and_test(train_file, test_file):
+  """Train and test"""
 
-  bunch = make_bunch()
+  samples, labels = load_data(train_file)
 
-  # raw occurences
-  vectorizer = sk.feature_extraction.text.CountVectorizer(
-    ngram_range=NGRAMRANGE, 
-    stop_words=None,
-    min_df=MINDF ,
-    vocabulary=None,
-    binary=False,
-    preprocessor=None)
-  count_matrix = vectorizer.fit_transform(bunch.data)
+  vectorizer = CountVectorizer(
+      ngram_range=(1,2),
+      min_df=3)
+  count_matrix = vectorizer.fit_transform(samples)
 
-  for i in sorted(vectorizer.vocabulary_.values()):
-    v = vectorizer.vocabulary_.keys()[vectorizer.vocabulary_.values().index(i)]
-    print i, '-', v
-
-  # tf-idf 
-  tf = sk.feature_extraction.text.TfidfTransformer()
+  tf = TfidfTransformer()
   tfidf_matrix = tf.fit_transform(count_matrix)
-  
-  scores = []
-  folds = sk.cross_validation.KFold(len(bunch.data), n_folds=NFOLDS)
-  for train_indices, test_indices in folds:
-    train_x = tfidf_matrix[train_indices]
-    train_y = bunch.target[train_indices]
-    test_x = tfidf_matrix[test_indices]
-    test_y = bunch.target[test_indices]
-    classifier = sk.svm.LinearSVC()
-    classifier.fit(train_x, train_y)
-    accuracy = classifier.score(test_x, test_y)
-    scores.append(accuracy)
-  
-  print 'accuracy:', np.mean(scores)
+
+  x_train, x_test, y_train, y_test = train_test_split(
+    tfidf_matrix, labels, test_size = 0.1, random_state=0)
+
+  classifier = LinearSVC() # class_weight='balanced')
+  model = classifier.fit(x_train, y_train)
+  predicted = classifier.predict(x_test)
+  print 'predictions:', predicted
+
+  precision = precision_score(y_test, predicted, pos_label=1)
+  recall = recall_score(y_test, predicted, pos_label=1)
+  f1 = f1_score(y_test, predicted, pos_label=1)
+  print 'p =', precision
+  print 'r =', recall
+  print 'f1 =', f1
 
 if __name__ == "__main__":
 
-  run_cross_validation()
+  # settings file specified as command-line argument
+  cfg = ConfigParser.ConfigParser()
+  cfg.read(sys.argv[1])
+  base = os.environ['DATA_ROOT']
+  train_file = os.path.join(base, cfg.get('data', 'train'))
+  test_file = os.path.join(base, cfg.get('data', 'test'))
+  print 'train:', train_file
+  print 'test:', test_file
+
+  train_and_test(train_file, test_file)
