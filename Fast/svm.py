@@ -13,40 +13,33 @@ def load_data(path):
   """Read data from file; return examples and labels"""
 
   samples = []
-  labels = []
+  targets = []
   for line in open(path):
-    label, text = line.strip().split('|')
+    target, text = line.strip().split('|')
     samples.append(text)
-    labels.append(label)
+    targets.append(target)
 
-  return numpy.array(samples), numpy.array(labels)
+  return numpy.array(samples), numpy.array(targets)
 
 def train_and_test(train_file, test_file):
   """Train and test"""
 
-  samples, labels = load_data(train_file)
+  train_samples, train_targets = load_data(train_file)
+  test_samples, test_targets = load_data(test_file)
 
-  vectorizer = CountVectorizer(
-      ngram_range=(1,2),
-      min_df=3)
-  count_matrix = vectorizer.fit_transform(samples)
+  vectorizer = CountVectorizer(ngram_range=(1,3))
+  train_counts = vectorizer.fit_transform(train_samples)
+  test_counts = vectorizer.transform(test_samples)
 
   tf = TfidfTransformer()
-  tfidf_matrix = tf.fit_transform(count_matrix)
+  train_tfidf = tf.fit_transform(train_counts)
+  test_tfidf = tf.transform(test_counts)
 
-  x_train, x_test, y_train, y_test = train_test_split(
-    tfidf_matrix, labels, test_size = 0.1, random_state=0)
+  classifier = LinearSVC(class_weight='balanced')
+  model = classifier.fit(train_tfidf, train_targets)
+  predictions = classifier.predict(test_tfidf)
 
-  classifier = LinearSVC() # class_weight='balanced')
-  model = classifier.fit(x_train, y_train)
-  predicted = classifier.predict(x_test)
-  print 'predictions:', predicted
-
-  precision = precision_score(y_test, predicted, pos_label=1)
-  recall = recall_score(y_test, predicted, pos_label=1)
-  f1 = f1_score(y_test, predicted, pos_label=1)
-  print 'p =', precision
-  print 'r =', recall
+  f1 = f1_score(test_targets, predictions, average=None)
   print 'f1 =', f1
 
 if __name__ == "__main__":
