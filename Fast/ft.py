@@ -95,7 +95,7 @@ if __name__ == "__main__":
             nb_epoch=cfg.getint('cnn', 'epochs'),
             batch_size=cfg.getint('cnn', 'batch'),
             verbose=1,
-            validation_split=0.1,
+            validation_split=0.0,
             class_weight=None)
 
   # probability for each class; (test size, num of classes)
