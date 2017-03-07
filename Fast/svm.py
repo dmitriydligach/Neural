@@ -22,7 +22,7 @@ def load_data(path):
 
   return samples, targets
 
-def train_and_test(train_file, test_file):
+def train_and_test(train_file, test_file, c=1):
   """Train and test"""
 
   train_samples, train_targets = load_data(train_file)
@@ -36,7 +36,7 @@ def train_and_test(train_file, test_file):
   train_tfidf = tf.fit_transform(train_counts)
   test_tfidf = tf.transform(test_counts)
 
-  classifier = LinearSVC(class_weight='balanced')
+  classifier = LinearSVC(C=c, class_weight='balanced')
   model = classifier.fit(train_tfidf, train_targets)
   predictions = classifier.predict(test_tfidf)
 
@@ -76,5 +76,9 @@ if __name__ == "__main__":
   print 'train:', train_file
   print 'test:', test_file
 
-  # train_and_test(train_file, test_file)
-  grid_search(train_file, test_file)
+  c_values = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+  for c in c_values:
+    print 'c =', c
+    train_and_test(train_file, test_file, c)
+    print
+    
