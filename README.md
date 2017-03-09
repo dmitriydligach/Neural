@@ -1,3 +1,0 @@
-# Deep learning experiments
-
-Relations and stuff...
