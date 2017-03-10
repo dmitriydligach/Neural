@@ -1,0 +1,9 @@
+# Fast text experiments
+
+event-time: 0.676380644001
+event-event: 0.508949059201
+
+# SVM experiments
+
+event-time: 0.569950331126 (C=1; best setting)
+event-event: 0.537335020792 (C=1; best setting)

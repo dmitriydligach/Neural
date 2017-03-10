@@ -1,4 +1,4 @@
-#!/Library/Frameworks/Python.framework/Versions/2.7/bin/python -B
+#!/usr/bin/env python
 
 import glob, string, ConfigParser, sys, os
 from sklearn.grid_search import GridSearchCV
@@ -81,4 +81,3 @@ if __name__ == "__main__":
     print 'c =', c
     train_and_test(train_file, test_file, c)
     print
-    
