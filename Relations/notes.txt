@@ -16,9 +16,3 @@ f1(contains average) = 0.507533362032
 
 Set embedding dimensions to 1000:
 f1(contains average) = 0.521575984991
-
-# CNN with a single filter
-
-Remove hidden layer:
-f1(contains average) = 0.501053518753
-
