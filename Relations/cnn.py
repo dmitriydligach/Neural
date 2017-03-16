@@ -16,7 +16,8 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
 from keras.layers import Merge
 from keras.layers.core import Dense, Dropout, Activation, Flatten
-from keras.layers.convolutional import Convolution1D, MaxPooling1D
+from keras.layers.convolutional import Conv1D, MaxPooling1D
+from keras.layers import GlobalMaxPooling1D
 from keras.layers.embeddings import Embedding
 import dataset
 import word2vec_model
@@ -81,13 +82,12 @@ if __name__ == "__main__":
                          input_length=maxlen,
                          trainable=True,
                          weights=init_vectors))
-    branch.add(Convolution1D(nb_filter=cfg.getint('cnn', 'filters'),
-                             filter_length=int(filter_len),
-                             border_mode='valid',
-                             activation='relu',
-                             subsample_length=1))
-    branch.add(MaxPooling1D(pool_length=2))
-    branch.add(Flatten())
+    branch.add(Conv1D(filters=cfg.getint('cnn', 'filters'),
+                      kernel_size=int(filter_len),
+                      activation='relu'))
+    branch.add(GlobalMaxPooling1D())
+    # branch.add(MaxPooling1D())
+    # branch.add(Flatten())
 
     branches.append(branch)
     train_xs.append(train_x)
