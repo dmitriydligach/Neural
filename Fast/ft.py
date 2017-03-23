@@ -7,16 +7,13 @@ import sys
 sys.path.append('../Lib/')
 sys.dont_write_bytecode = True
 import ConfigParser, os
-import sklearn as sk
 from sklearn.metrics import f1_score
 import keras as k
 from keras.utils.np_utils import to_categorical
 from keras.optimizers import RMSprop
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
-from keras.layers import Merge
-from keras.layers.core import Dense, Dropout, Activation, Flatten
-from keras.layers.convolutional import Convolution1D, MaxPooling1D
+from keras.layers.core import Dense, Activation
 from keras.layers import GlobalAveragePooling1D
 from keras.layers.embeddings import Embedding
 import dataset
@@ -36,7 +33,6 @@ if __name__ == "__main__":
   print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
   print 'hidden:', cfg.get('cnn', 'hidden')
-  print 'dropout:', cfg.get('cnn', 'dropout')
   print 'learnrt:', cfg.get('cnn', 'learnrt')
 
   # learn alphabet from training examples
@@ -77,11 +73,10 @@ if __name__ == "__main__":
 
   model.add(GlobalAveragePooling1D())
 
-  model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
+  # model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
   model.add(Dense(cfg.getint('cnn', 'hidden')))
   model.add(Activation('relu'))
 
-  # model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
   model.add(Dense(classes))
   model.add(Activation('softmax'))
 
