@@ -73,7 +73,6 @@ if __name__ == "__main__":
 
   model.add(GlobalAveragePooling1D())
 
-  # model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
   model.add(Dense(cfg.getint('cnn', 'hidden')))
   model.add(Activation('relu'))
 
@@ -87,7 +86,7 @@ if __name__ == "__main__":
                 metrics=['accuracy'])
   model.fit(train_x,
             train_y,
-            nb_epoch=cfg.getint('cnn', 'epochs'),
+            epochs=cfg.getint('cnn', 'epochs'),
             batch_size=cfg.getint('cnn', 'batch'),
             verbose=1,
             validation_split=0.0,
