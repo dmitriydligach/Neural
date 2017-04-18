@@ -25,6 +25,9 @@ def print_config(cfg):
 
   print 'train:', cfg.get('data', 'train')
   print 'test:', cfg.get('data', 'test')
+  if cfg.has_option('data', 'embed'):
+    print 'embeddings:', cfg.get('data', 'embed')
+
   print 'batch:', cfg.get('cnn', 'batch')
   print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
@@ -56,7 +59,6 @@ if __name__ == "__main__":
   # TODO: what what are we doing for index 0 (oov words)?
   # use pre-trained word embeddings?
   if cfg.has_option('data', 'embed'):
-    print 'embeddings:', cfg.get('data', 'embed')
     embed_file = os.path.join(base, cfg.get('data', 'embed'))
     word2vec = word2vec_model.Model(embed_file)
     init_vectors = [word2vec.select_vectors(dataset.word2int)]

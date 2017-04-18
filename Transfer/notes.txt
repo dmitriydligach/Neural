@@ -1,0 +1,9 @@
+# Baseline (single filter cnn)
+
+event-time: f1=0.676
+event-event: f1=0.475
+
+# Pre-trained embedding experiments
+
+event-time with mimic: f1=0.687
+event-event with mimic: f1=0.547
