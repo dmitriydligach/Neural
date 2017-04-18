@@ -20,16 +20,11 @@ from keras.layers.embeddings import Embedding
 import dataset
 import word2vec_model
 
-if __name__ == "__main__":
+def print_config(cfg):
+  """Print configuration settings"""
 
-  # settings file specified as command-line argument
-  cfg = ConfigParser.ConfigParser()
-  cfg.read(sys.argv[1])
-  base = os.environ['DATA_ROOT']
-  train_file = os.path.join(base, cfg.get('data', 'train'))
-  test_file = os.path.join(base, cfg.get('data', 'test'))
-  print 'train:', train_file
-  print 'test:', test_file
+  print 'train:', cfg.get('data', 'train')
+  print 'test:', cfg.get('data', 'test')
   print 'batch:', cfg.get('cnn', 'batch')
   print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
@@ -38,6 +33,16 @@ if __name__ == "__main__":
   print 'hidden:', cfg.get('cnn', 'hidden')
   print 'dropout:', cfg.get('cnn', 'dropout')
   print 'learnrt:', cfg.get('cnn', 'learnrt')
+
+if __name__ == "__main__":
+
+  # settings file specified as command-line argument
+  cfg = ConfigParser.ConfigParser()
+  cfg.read(sys.argv[1])
+  print_config(cfg)
+  base = os.environ['DATA_ROOT']
+  train_file = os.path.join(base, cfg.get('data', 'train'))
+  test_file = os.path.join(base, cfg.get('data', 'test'))
 
   # learn alphabet from training examples
   dataset = dataset.DatasetProvider(train_file)
@@ -97,8 +102,11 @@ if __name__ == "__main__":
             epochs=cfg.getint('cnn', 'epochs'),
             batch_size=cfg.getint('cnn', 'batch'),
             verbose=1,
-            validation_split=0.0,
-            class_weight='auto')
+            validation_split=0.0)
+
+  # get_weights() returns a list of 1 element
+  weights = model.layers[0].get_weights()[0]
+  print weights.shape
 
   # probability for each class; (test size, num of classes)
   distribution = \
