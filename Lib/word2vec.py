@@ -1,19 +1,33 @@
 #!/Library/Frameworks/Python.framework/Versions/2.7/bin/python -B
 
 import numpy as np
-
 import os, os.path
+
+def write_vectors(alphabet, weights, path):
+  """Write model to file given an alphabet and weights"""
+
+  # number of words in alphabet must be the same
+  # as the number of rows in weights matrix
+  # alphabet maps words to integers
+  # integers are indicies into weights matrix
+
+  with open(path, 'w') as outfile:
+    outfile.write('%s %s\n' % (len(alphabet), weights.shape[1]))
+    for word, index in alphabet.items():
+      vector = [str(element) for element in weights[index]]
+      vector_as_string = ' '.join(vector)
+      outfile.write('%s %s\n' % (word, vector_as_string))
 
 class Model:
   """Represents a word2vec model"""
 
   def __init__(self, path):
     """Initiaize from a word2vec model file"""
-                
+
     self.count = None      # number of vectors
     self.dimensions = None # number of dimensions
     self.vectors = {}      # key: word, value: numpy vector
-        
+
     with open(path) as file:
       for line in file:
         elements = line.strip().split()
@@ -38,7 +52,7 @@ class Model:
         vecs[index, :] = average
 
     return vecs
-  
+
   def average_words(self, words):
     """Compute average vector for a list of words"""
 
@@ -64,7 +78,7 @@ class Model:
         matrix.append(list(average))
 
     np.savetxt(outfile, np.array(matrix))
-      
+
 if __name__ == "__main__":
 
   path = '/Users/Dima/Loyola/Data/Word2Vec/Models/GoogleNews-vectors-negative300.txt'

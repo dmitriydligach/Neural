@@ -18,7 +18,7 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.layers import Conv1D, GlobalMaxPooling1D
 from keras.layers.embeddings import Embedding
 import dataset
-import word2vec_model
+import word2vec
 
 def print_config(cfg):
   """Print configuration settings"""
@@ -60,8 +60,8 @@ if __name__ == "__main__":
   # use pre-trained word embeddings?
   if cfg.has_option('data', 'embed'):
     embed_file = os.path.join(base, cfg.get('data', 'embed'))
-    word2vec = word2vec_model.Model(embed_file)
-    init_vectors = [word2vec.select_vectors(dataset.word2int)]
+    w2v = word2vec.Model(embed_file)
+    init_vectors = [w2v.select_vectors(dataset.word2int)]
 
   # turn x and y into numpy array among other things
   classes = len(set(train_y))
@@ -107,8 +107,9 @@ if __name__ == "__main__":
             validation_split=0.0)
 
   # get_weights() returns a list of 1 element
+  # dump these weights to file (word2vec model format)
   weights = model.layers[0].get_weights()[0]
-  print weights.shape
+  word2vec.write_vectors(dataset.word2int, weights, 'weights.txt')
 
   # probability for each class; (test size, num of classes)
   distribution = \
