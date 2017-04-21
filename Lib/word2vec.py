@@ -1,5 +1,3 @@
-#!/Library/Frameworks/Python.framework/Versions/2.7/bin/python -B
-
 import numpy as np
 import os, os.path
 
@@ -49,6 +47,7 @@ class Model:
       if word in self.vectors:
         vecs[index, :] = self.vectors[word]
       else:
+        # also tried np.random.uniform(low=-0.25, high=0.25, size=self.dimensions)
         vecs[index, :] = average
 
     return vecs
