@@ -20,7 +20,7 @@ from keras.layers.convolutional import Conv1D, MaxPooling1D
 from keras.layers import GlobalMaxPooling1D
 from keras.layers.embeddings import Embedding
 import dataset
-import word2vec_model
+import word2vec
 
 if __name__ == "__main__":
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
   if cfg.has_option('data', 'embed'):
     print 'embeddings:', cfg.get('data', 'embed')
     embed_file = os.path.join(base, cfg.get('data', 'embed'))
-    word2vec = word2vec_model.Model(embed_file)
+    word2vec = word2vec.Model(embed_file)
     init_vectors = [word2vec.select_vectors(dataset.word2int)]
 
   # turn x and y into numpy array among other things
