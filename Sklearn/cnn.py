@@ -33,16 +33,18 @@ def print_config(cfg):
     print 'embeddings:', cfg.get('data', 'embed')
 
   print 'batch:', cfg.get('cnn', 'batch')
-  print 'epochs:', cfg.get('cnn', 'epochs')
   print 'embdims:', cfg.get('cnn', 'embdims')
   print 'filters:', cfg.get('cnn', 'filters')
-  print 'filtlen:', cfg.get('cnn', 'filtlen')
-  print 'hidden:', cfg.get('cnn', 'hidden')
-  print 'dropout:', cfg.get('cnn', 'dropout')
   print 'learnrt:', cfg.get('cnn', 'learnrt')
 
-def make_model(kernel_size):
+def make_model(kernel_size, hidden_size, dropout):
   """Creating a model for sklearn"""
+
+  print '\n'
+  print 'kernel_size:', kernel_size
+  print 'hidden_size:', hidden_size
+  print 'dropout:', dropout
+  print
 
   init_vectors = None
   if cfg.has_option('data', 'embed'):
@@ -61,11 +63,11 @@ def make_model(kernel_size):
                    activation='relu'))
   model.add(GlobalMaxPooling1D())
 
-  model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
-  model.add(Dense(cfg.getint('cnn', 'hidden')))
+  model.add(Dropout(dropout))
+  model.add(Dense(hidden_size))
   model.add(Activation('relu'))
 
-  model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
+  model.add(Dropout(dropout))
   model.add(Dense(classes))
   model.add(Activation('softmax'))
 
@@ -79,39 +81,32 @@ def make_model(kernel_size):
 
 if __name__ == "__main__":
 
-  # settings file specified as command-line argument
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
-  print_config(cfg)
+
   base = os.environ['DATA_ROOT']
   train_file = os.path.join(base, cfg.get('data', 'train'))
   test_file = os.path.join(base, cfg.get('data', 'test'))
 
-  # learn alphabet from training examples
   dataset = dataset.DatasetProvider(train_file)
-  # now load training examples and labels
   train_x, train_y = dataset.load(train_file)
   maxlen = max([len(seq) for seq in train_x])
-  # now load test examples and labels
   test_x, test_y = dataset.load(test_file, maxlen=maxlen)
 
-  # turn x and y into numpy array among other things
   classes = len(set(train_y))
   train_x = pad_sequences(train_x, maxlen=maxlen)
   train_y = to_categorical(np.array(train_y), classes)
   test_x = pad_sequences(test_x, maxlen=maxlen)
   test_y = to_categorical(np.array(test_y), classes)
 
-  print 'train_x shape:', train_x.shape
-  print 'train_y shape:', train_y.shape
-  print 'test_x shape:', test_x.shape
-  print 'test_y shape:', test_y.shape, '\n'
-
   classifier = KerasClassifier(make_model, batch_size=50)
   validator = GridSearchCV(classifier,
                            param_grid={'kernel_size': [2,3],
-                                       'epochs': [3,4]},
-                           scoring='log_loss')
+                                       'hidden_size': [100,200,500],
+                                       'dropout': [0.25,10.5],
+                                       'epochs': [3,4,5]},
+                           scoring='log_loss',
+                           cv=2)
   validator.fit(train_x, train_y)
   print('The parameters of the best model are: ')
   print(validator.best_params_)
