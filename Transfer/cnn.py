@@ -94,8 +94,7 @@ if __name__ == "__main__":
   model.add(Dense(classes))
   model.add(Activation('softmax'))
 
-  optimizer = RMSprop(lr=cfg.getfloat('cnn', 'learnrt'),
-                      rho=0.9, epsilon=1e-08)
+  optimizer = RMSprop(lr=cfg.getfloat('cnn', 'learnrt'))
   model.compile(loss='categorical_crossentropy',
                 optimizer=optimizer,
                 metrics=['accuracy'])
