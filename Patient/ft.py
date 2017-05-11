@@ -38,6 +38,7 @@ if __name__ == "__main__":
   train_y = np.array(train_y)
   print 'train_x shape:', train_x.shape
   print 'train_y shape:', train_y.shape
+  print 'unique features:', len(dataset.token2int)
 
   model = Sequential()
   model.add(Embedding(len(dataset.token2int),
@@ -51,18 +52,14 @@ if __name__ == "__main__":
   model.add(Dense(classes))
   model.add(Activation('softmax'))
 
-  optimizer = RMSprop(lr=cfg.getfloat('cnn', 'learnrt'),
-                      rho=0.9, epsilon=1e-08)
   model.compile(loss='categorical_crossentropy',
-                optimizer=optimizer,
+                optimizer='rmsprop',
                 metrics=['accuracy'])
   model.fit(train_x,
             train_y,
             epochs=cfg.getint('cnn', 'epochs'),
             batch_size=cfg.getint('cnn', 'batch'),
-            verbose=1,
-            validation_split=0.0,
-            class_weight=None)
+            validation_split=0.1)
 
   # probability for each class; (test size, num of classes)
   distribution = \
