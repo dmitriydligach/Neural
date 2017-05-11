@@ -27,7 +27,7 @@ class DatasetProvider:
 
     self.corpus_path = corpus_path
     self.label_path = label_path
-    self.token2int = {}  # words indexed by frequency
+    self.token2int = {} # words indexed by frequency
     self.label2int = {} # class to int mapping
 
   def make_token_alphabet(self, min_df=5, outf='alphabet.txt'):

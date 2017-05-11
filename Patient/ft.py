@@ -17,7 +17,6 @@ from keras.layers.core import Dense, Activation
 from keras.layers import GlobalAveragePooling1D
 from keras.layers.embeddings import Embedding
 import dataset
-import word2vec_model
 
 if __name__ == "__main__":
 
@@ -25,46 +24,25 @@ if __name__ == "__main__":
   cfg.read(sys.argv[1])
   base = os.environ['DATA_ROOT']
   train_dir = os.path.join(base, cfg.get('data', 'train'))
+  code_file = os.path.join(base, cfg.get('data', 'labels'))
 
-  # learn alphabet from training examples
-  dataset = dataset.DatasetProvider(train_dir)
-
-
-
-  # now load training examples and labels
-  train_x, train_y = dataset.load(train_file)
+  dataset = dataset.DatasetProvider(train_dir, code_file)
+  dataset.make_token_alphabet()
+  dataset.make_label_alphabet()
+  train_x, train_y = dataset.load()
   maxlen = max([len(seq) for seq in train_x])
-  # now load test examples and labels
-  test_x, test_y = dataset.load(test_file, maxlen=maxlen)
 
-  init_vectors = None
-  # TODO: what what are we doing for index 0 (oov words)?
-  # use pre-trained word embeddings?
-  if cfg.has_option('data', 'embed'):
-    print 'embeddings:', cfg.get('data', 'embed')
-    embed_file = os.path.join(base, cfg.get('data', 'embed'))
-    word2vec = word2vec_model.Model(embed_file)
-    init_vectors = [word2vec.select_vectors(dataset.word2int)]
-
-  # turn x and y into numpy array among other things
-  classes = len(set(train_y))
+  # turn x into numpy array among other things
+  classes = len(dataset.label2int)
   train_x = pad_sequences(train_x, maxlen=maxlen)
-  train_y = to_categorical(np.array(train_y), classes)
-  test_x = pad_sequences(test_x, maxlen=maxlen)
-  test_y = to_categorical(np.array(test_y), classes)
-
+  train_y = np.array(train_y)
   print 'train_x shape:', train_x.shape
   print 'train_y shape:', train_y.shape
-  print 'test_x shape:', test_x.shape
-  print 'test_y shape:', test_y.shape, '\n'
 
   model = Sequential()
-  model.add(Embedding(len(dataset.word2int),
+  model.add(Embedding(len(dataset.token2int),
                       cfg.getint('cnn', 'embdims'),
-                      input_length=maxlen,
-                      trainable=True,
-                      weights=init_vectors))
-
+                      input_length=maxlen))
   model.add(GlobalAveragePooling1D())
 
   model.add(Dense(cfg.getint('cnn', 'hidden')))
