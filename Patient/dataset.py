@@ -22,30 +22,60 @@ def ngrams(text):
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path, code_path):
+  def __init__(self, corpus_path, code_path, maxsize=10000):
     """Index words by frequency in a file"""
 
+    self.alphabet_file = 'alphabet.txt'
     self.corpus_path = corpus_path
     self.code_path = code_path
+    self.max_tokens = maxsize # max tokens in file
 
     self.token2int = {} # words indexed by frequency
-    self.code2int = {} # class to int mapping
+    self.code2int = {}  # class to int mapping
 
-  def make_token_alphabet(self, min_df=5, outf='alphabet.txt'):
-    """Map tokens to integers and dump to file"""
+    if not os.path.isfile(self.alphabet_file):
+      self.write_alphabet()
+    self.read_alphabet()
+    self.make_code_alphabet()
 
-    tokens = [] # corpus as list
+  def get_tokens(self, file_name):
+    """Return file as a list of tokens"""
+
+    infile = os.path.join(self.corpus_path, file_name)
+    text = open(infile).read().lower()
+
+    tokens = [] # file as a list of tokens
+    for token in text.split():
+      if token.isalpha():
+        # token = token.replace('|', '')
+        tokens.append(token)
+
+    if len(tokens) > self.max_tokens:
+      return []
+    else:
+      return tokens
+
+  def write_alphabet(self):
+    """Write unique corpus tokens to file"""
+
+    tokens = [] # corpus as a list of tokens
     for file in os.listdir(self.corpus_path):
-      text = open(os.path.join(self.corpus_path, file)).read()
-      tokens.extend(text.lower().split())
+      file_tokens = self.get_tokens(file)
+      tokens.extend(file_tokens)
 
-    index = 1 # reserve 0 for oov items
-    outfile = open(outf, 'w')
-    self.token2int['oov_word'] = 0
+    outfile = open(self.alphabet_file, 'w')
     token_counts = collections.Counter(tokens)
     for token, count in token_counts.most_common():
-      if count > min_df:
-        outfile.write('%s|%s\n' % (token, count))
+      outfile.write('%s|%s\n' % (token, count))
+
+  def read_alphabet(self, mintf=10):
+    """Read alphabet from file to token2int"""
+
+    index = 1
+    self.token2int['oov_word'] = 0
+    for line in open(self.alphabet_file):
+      token, count = line.strip().split('|')
+      if int(count) > mintf:
         self.token2int[token] = index
         index = index + 1
 
@@ -71,9 +101,10 @@ class DatasetProvider:
     subj2codes = icd9.subject_to_code_map(self.code_path)
 
     for file in os.listdir(self.corpus_path):
-      text = open(os.path.join(self.corpus_path, file)).read()
+      file_tokens = self.get_tokens(file)
+
       example = []
-      for token in text.lower().split():
+      for token in file_tokens:
         if token in self.token2int:
           example.append(self.token2int[token])
         else:
@@ -100,6 +131,7 @@ if __name__ == "__main__":
   code_file = os.path.join(base, cfg.get('data', 'codes'))
 
   dataset = DatasetProvider(train_dir, code_file)
-  dataset.make_token_alphabet()
-  dataset.make_code_alphabet()
-  dataset.load()
+
+  print len(dataset.token2int)
+  print len(dataset.code2int)
+  # dataset.load()
