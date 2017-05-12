@@ -24,16 +24,14 @@ if __name__ == "__main__":
   cfg.read(sys.argv[1])
   base = os.environ['DATA_ROOT']
   train_dir = os.path.join(base, cfg.get('data', 'train'))
-  code_file = os.path.join(base, cfg.get('data', 'labels'))
+  code_file = os.path.join(base, cfg.get('data', 'codes'))
 
   dataset = dataset.DatasetProvider(train_dir, code_file)
-  dataset.make_token_alphabet()
-  dataset.make_label_alphabet()
   train_x, train_y = dataset.load()
   maxlen = max([len(seq) for seq in train_x])
 
   # turn x into numpy array among other things
-  classes = len(dataset.label2int)
+  classes = len(dataset.code2int)
   train_x = pad_sequences(train_x, maxlen=maxlen)
   train_y = np.array(train_y)
   print 'train_x shape:', train_x.shape

@@ -134,4 +134,5 @@ if __name__ == "__main__":
 
   print len(dataset.token2int)
   print len(dataset.code2int)
-  # dataset.load()
+
+  dataset.load()
