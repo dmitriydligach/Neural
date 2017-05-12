@@ -22,13 +22,14 @@ def ngrams(text):
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path, label_path):
+  def __init__(self, corpus_path, code_path):
     """Index words by frequency in a file"""
 
     self.corpus_path = corpus_path
-    self.label_path = label_path
+    self.code_path = code_path
+
     self.token2int = {} # words indexed by frequency
-    self.label2int = {} # class to int mapping
+    self.code2int = {} # class to int mapping
 
   def make_token_alphabet(self, min_df=5, outf='alphabet.txt'):
     """Map tokens to integers and dump to file"""
@@ -48,26 +49,26 @@ class DatasetProvider:
         self.token2int[token] = index
         index = index + 1
 
-  def make_label_alphabet(self):
-    """Map labels to integers"""
+  def make_code_alphabet(self):
+    """Map codes to integers"""
 
     codes = set()
-    frame = pandas.read_csv(self.label_path)
+    frame = pandas.read_csv(self.code_path)
     for icd9_code in frame.ICD9_CODE:
       codes.add(icd9_code)
 
     index = 0
     for code in codes:
-      self.label2int[code] = index
+      self.code2int[code] = index
       index = index + 1
 
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""
 
-    labels = []
+    codes = []
     examples = []
 
-    subj2codes = icd9.subject_to_code_map(self.label_path)
+    subj2codes = icd9.subject_to_code_map(self.code_path)
 
     for file in os.listdir(self.corpus_path):
       text = open(os.path.join(self.corpus_path, file)).read()
@@ -83,12 +84,12 @@ class DatasetProvider:
       examples.append(example)
 
       subj_id = int(file.split('.')[0])
-      label_vec = [0] * len(self.label2int)
+      code_vec = [0] * len(self.code2int)
       for code in subj2codes[subj_id]:
-        label_vec[self.label2int[code]] = 1
-      labels.append(label_vec)
+        code_vec[self.code2int[code]] = 1
+      codes.append(code_vec)
 
-    return examples, labels
+    return examples, codes
 
 if __name__ == "__main__":
 
@@ -96,9 +97,9 @@ if __name__ == "__main__":
   cfg.read(sys.argv[1])
   base = os.environ['DATA_ROOT']
   train_dir = os.path.join(base, cfg.get('data', 'train'))
-  code_file = os.path.join(base, cfg.get('data', 'labels'))
+  code_file = os.path.join(base, cfg.get('data', 'codes'))
 
   dataset = DatasetProvider(train_dir, code_file)
   dataset.make_token_alphabet()
-  dataset.make_label_alphabet()
+  dataset.make_code_alphabet()
   dataset.load()
