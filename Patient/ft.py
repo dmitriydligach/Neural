@@ -44,7 +44,6 @@ if __name__ == "__main__":
   print 'test_y shape:', test_y.shape
   print 'unique features:', len(dataset.token2int)
 
-  print train_x
   print 'train_x num of elements:', train_x.size
   print 'train_x dtype:', train_x.dtype
   print 'train_x item size in bytes:', train_x.itemsize
@@ -61,9 +60,9 @@ if __name__ == "__main__":
   model.add(Activation('relu'))
 
   model.add(Dense(classes))
-  model.add(Activation('softmax'))
+  model.add(Activation('sigmoid'))
 
-  model.compile(loss='categorical_crossentropy',
+  model.compile(loss='binary_crossentropy',
                 optimizer='rmsprop',
                 metrics=['accuracy'])
   model.fit(train_x,
@@ -74,8 +73,15 @@ if __name__ == "__main__":
 
   # probability for each class; (test size, num of classes)
   distribution = model.predict(test_x, batch_size=cfg.getint('cnn', 'batch'))
+
+  print
   print distribution
+  print
   print 'dims:', distribution.shape
+  print
+
+  print np.where( distribution > 0.5 )
+
   # class predictions; (test size,)
   # predictions = np.argmax(distribution, axis=1)
   # gold labels; (test size,)
