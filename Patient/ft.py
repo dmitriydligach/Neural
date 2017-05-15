@@ -43,8 +43,7 @@ if __name__ == "__main__":
   print 'train_x dtype:', train_x.dtype
   print 'train_x item size in bytes:', train_x.itemsize
   print 'train_x total size in bytes:', train_x.size * train_x.itemsize
-  print 'train_x largest value:', numpy.amax(train_x)
-  exit()
+  print 'train_x largest value:', np.amax(train_x)
 
   model = Sequential()
   model.add(Embedding(len(dataset.token2int),
