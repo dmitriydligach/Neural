@@ -8,6 +8,7 @@ sys.path.append('../Lib/')
 sys.dont_write_bytecode = True
 import ConfigParser, os
 from sklearn.metrics import f1_score
+from sklearn.model_selection import train_test_split
 import keras as k
 from keras.utils.np_utils import to_categorical
 from keras.optimizers import RMSprop
@@ -27,15 +28,20 @@ if __name__ == "__main__":
   code_file = os.path.join(base, cfg.get('data', 'codes'))
 
   dataset = dataset.DatasetProvider(train_dir, code_file)
-  train_x, train_y = dataset.load()
+  x, y = dataset.load()
+  train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.20)
   maxlen = max([len(seq) for seq in train_x])
 
   # turn x into numpy array among other things
   classes = len(dataset.code2int)
   train_x = pad_sequences(train_x, maxlen=maxlen)
+  test_x = pad_sequences(test_x, maxlen=maxlen)
   train_y = np.array(train_y)
+  test_y = np.array(test_y)
   print 'train_x shape:', train_x.shape
   print 'train_y shape:', train_y.shape
+  print 'test_x shape:', test_x.shape
+  print 'test_y shape:', test_y.shape
   print 'unique features:', len(dataset.token2int)
 
   print train_x
@@ -64,28 +70,16 @@ if __name__ == "__main__":
             train_y,
             epochs=cfg.getint('cnn', 'epochs'),
             batch_size=cfg.getint('cnn', 'batch'),
-            validation_split=0.1)
+            validation_split=0.0)
 
   # probability for each class; (test size, num of classes)
-  distribution = \
-    model.predict(test_x, batch_size=cfg.getint('cnn', 'batch'))
+  distribution = model.predict(test_x, batch_size=cfg.getint('cnn', 'batch'))
+  print distribution
+  print 'dims:', distribution.shape
   # class predictions; (test size,)
-  predictions = np.argmax(distribution, axis=1)
+  # predictions = np.argmax(distribution, axis=1)
   # gold labels; (test size,)
-  gold = np.argmax(test_y, axis=1)
+  # gold = np.argmax(test_y, axis=1)
 
   # f1 scores
-  label_f1 = f1_score(gold, predictions, average=None)
-
-  print
-  for label, idx in dataset.label2int.items():
-    print 'f1(%s)=%f' % (label, label_f1[idx])
-
-  if 'contains' in dataset.label2int:
-    idxs = [dataset.label2int['contains'], dataset.label2int['contains-1']]
-    contains_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
-    print '\nf1(contains average) =', contains_f1
-  else:
-    idxs = dataset.label2int.values()
-    average_f1 = f1_score(gold, predictions, labels=idxs, average='micro')
-    print 'f1(all) =', average_f1
+  # label_f1 = f1_score(gold, predictions, average=None)

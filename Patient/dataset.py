@@ -132,8 +132,4 @@ if __name__ == "__main__":
   code_file = os.path.join(base, cfg.get('data', 'codes'))
 
   dataset = DatasetProvider(train_dir, code_file)
-
-  print len(dataset.token2int)
-  print len(dataset.code2int)
-
-  dataset.load()
+  
