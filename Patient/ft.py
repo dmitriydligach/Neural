@@ -38,6 +38,14 @@ if __name__ == "__main__":
   print 'train_y shape:', train_y.shape
   print 'unique features:', len(dataset.token2int)
 
+  print train_x
+  print 'train_x num of elements:', train_x.size
+  print 'train_x dtype:', train_x.dtype
+  print 'train_x item size in bytes:', train_x.itemsize
+  print 'train_x total size in bytes:', train_x.size * train_x.itemsize
+  print 'train_x largest value:', numpy.amax(train_x)
+  exit()
+
   model = Sequential()
   model.add(Embedding(len(dataset.token2int),
                       cfg.getint('cnn', 'embdims'),

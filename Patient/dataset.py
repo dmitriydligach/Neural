@@ -33,6 +33,7 @@ class DatasetProvider:
     self.token2int = {} # words indexed by frequency
     self.code2int = {}  # class to int mapping
 
+    # making alphabet is expensive so do it once
     if not os.path.isfile(self.alphabet_file):
       self.write_alphabet()
     self.read_alphabet()
