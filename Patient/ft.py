@@ -57,8 +57,9 @@ if __name__ == "__main__":
   model.add(Dense(classes))
   model.add(Activation('sigmoid'))
 
+  optimizer = RMSprop(lr=cfg.getfloat('cnn', 'learnrt'))
   model.compile(loss='binary_crossentropy',
-                optimizer='rmsprop',
+                optimizer=optimizer,
                 metrics=['accuracy'])
   model.fit(train_x,
             train_y,

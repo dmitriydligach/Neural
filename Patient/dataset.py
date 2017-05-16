@@ -5,19 +5,6 @@ import ConfigParser, os, nltk, pandas, sys
 sys.dont_write_bytecode = True
 import glob, string, collections, operator
 
-def ngrams(text):
-  """Generate all unique bigrams from text"""
-
-  ngram_list = []
-
-  for unigram in text.split():
-    ngram_list.append(unigram)
-
-  for bigram_as_list in nltk.bigrams(text.split()):
-    ngram_list.append('_'.join(bigram_as_list))
-
-  return set(ngram_list)
-
 class DatasetProvider:
   """THYME relation data"""
 
@@ -39,8 +26,8 @@ class DatasetProvider:
     self.read_alphabet()
     self.make_code_alphabet()
 
-  def get_tokens(self, file_name):
-    """Return file as a list of tokens"""
+  def get_ngrams(self, file_name):
+    """Return file as a list of ngrams"""
 
     infile = os.path.join(self.corpus_path, file_name)
     text = open(infile).read().lower()
@@ -48,21 +35,27 @@ class DatasetProvider:
     tokens = [] # file as a list of tokens
     for token in text.split():
       if token.isalpha():
-        # token = token.replace('|', '')
         tokens.append(token)
 
     if len(tokens) > self.max_tokens:
-      return []
-    else:
-      return tokens
+      return None
+
+    ngram_list = []
+    for bigram_as_list in nltk.ngrams(tokens, 2):
+      ngram_list.append('_'.join(bigram_as_list))
+    ngram_list.extend(tokens)
+
+    return ngram_list
 
   def write_alphabet(self):
     """Write unique corpus tokens to file"""
 
     tokens = [] # corpus as a list of tokens
     for file in os.listdir(self.corpus_path):
-      file_tokens = self.get_tokens(file)
-      tokens.extend(file_tokens)
+      file_ngrams = self.get_ngrams(file)
+      if file_ngrams == None:
+        continue
+      tokens.extend(file_ngrams)
 
     outfile = open(self.alphabet_file, 'w')
     token_counts = collections.Counter(tokens)
@@ -117,14 +110,13 @@ class DatasetProvider:
     codes = []
     examples = []
     for file in os.listdir(self.corpus_path):
-      file_tokens = self.get_tokens(file)
+      file_ngrams = self.get_ngrams(file)
+      if file_ngrams == None:
+        continue
 
       example = []
-      for token in file_tokens:
-        if token in self.token2int:
-          example.append(self.token2int[token])
-        else:
-          example.append(self.token2int['oov_word'])
+      for token in file_ngrams:
+        example.append(self.token2int[token])
 
       if len(example) > maxlen:
         example = example[0:maxlen]
