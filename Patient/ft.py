@@ -74,18 +74,9 @@ if __name__ == "__main__":
   # probability for each class; (test size, num of classes)
   distribution = model.predict(test_x, batch_size=cfg.getint('cnn', 'batch'))
 
-  print
-  print distribution
-  print
-  print 'dims:', distribution.shape
-  print
+  # turn into an indicator matrix
+  distribution[distribution < 0.5] = 0
+  distribution[distribution >= 0.5] = 1
 
-  print np.where( distribution > 0.5 )
-
-  # class predictions; (test size,)
-  # predictions = np.argmax(distribution, axis=1)
-  # gold labels; (test size,)
-  # gold = np.argmax(test_y, axis=1)
-
-  # f1 scores
-  # label_f1 = f1_score(gold, predictions, average=None)
+  f1 = f1_score(test_y, distribution, average='macro')
+  print "f1 =", label_f1
