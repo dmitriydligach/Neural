@@ -50,7 +50,7 @@ class DatasetProvider:
   def write_alphabet(self):
     """Write unique corpus tokens to file"""
 
-    tokens = [] # corpus as a list of tokens
+    tokens = [] # entire corpus
     for file in os.listdir(self.corpus_path):
       file_ngrams = self.get_ngrams(file)
       if file_ngrams == None:
@@ -62,7 +62,7 @@ class DatasetProvider:
     for token, count in token_counts.most_common():
       outfile.write('%s|%s\n' % (token, count))
 
-  def read_alphabet(self, mintf=10):
+  def read_alphabet(self, mintf=50):
     """Read alphabet from file to token2int"""
 
     index = 1
@@ -116,7 +116,10 @@ class DatasetProvider:
 
       example = []
       for token in file_ngrams:
-        example.append(self.token2int[token])
+        if token in self.token2int:
+          example.append(self.token2int[token])
+        else:
+          example.append(self.token2int['oov_word'])
 
       if len(example) > maxlen:
         example = example[0:maxlen]
