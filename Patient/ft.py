@@ -43,12 +43,7 @@ if __name__ == "__main__":
   print 'test_x shape:', test_x.shape
   print 'test_y shape:', test_y.shape
   print 'unique features:', len(dataset.token2int)
-
-  print 'train_x num of elements:', train_x.size
-  print 'train_x dtype:', train_x.dtype
-  print 'train_x item size in bytes:', train_x.itemsize
-  print 'train_x total size in bytes:', train_x.size * train_x.itemsize
-  print 'train_x largest value:', np.amax(train_x)
+  print 'train_x size in bytes:', train_x.size * train_x.itemsize
 
   model = Sequential()
   model.add(Embedding(len(dataset.token2int),
@@ -79,4 +74,4 @@ if __name__ == "__main__":
   distribution[distribution >= 0.5] = 1
 
   f1 = f1_score(test_y, distribution, average='macro')
-  print "f1 =", label_f1
+  print "f1 =", f1

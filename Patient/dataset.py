@@ -4,7 +4,6 @@ import numpy
 import ConfigParser, os, nltk, pandas, sys
 sys.dont_write_bytecode = True
 import glob, string, collections, operator
-import icd9
 
 def ngrams(text):
   """Generate all unique bigrams from text"""
@@ -32,6 +31,7 @@ class DatasetProvider:
 
     self.token2int = {} # words indexed by frequency
     self.code2int = {}  # class to int mapping
+    self.subj2codes = {} # subj_id to set of icd9 codes
 
     # making alphabet is expensive so do it once
     if not os.path.isfile(self.alphabet_file):
@@ -83,24 +83,39 @@ class DatasetProvider:
   def make_code_alphabet(self):
     """Map codes to integers"""
 
+    # category: first three digits
+    # subcategory: fourth digit
+    # subclassification: fifth digit
+    # for now only using icd9 categories
+
     codes = set()
     frame = pandas.read_csv(self.code_path)
     for icd9_code in frame.ICD9_CODE:
-      codes.add(icd9_code)
+      icd9_category = str(icd9_code)[0:3]
+      codes.add(icd9_category)
 
     index = 0
     for code in codes:
       self.code2int[code] = index
       index = index + 1
 
+  def map_subject_to_codes(self):
+    """Dictionary mapping subject ids to icd9 codes"""
+
+    frame = pandas.read_csv(self.code_path)
+
+    for subj_id, icd9_code in zip(frame.SUBJECT_ID, frame.ICD9_CODE):
+      if subj_id not in self.subj2codes:
+        self.subj2codes[subj_id] = set()
+      self.subj2codes[subj_id].add(str(icd9_code))
+
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""
 
+    self.map_subject_to_codes()
+
     codes = []
     examples = []
-
-    subj2codes = icd9.subject_to_code_map(self.code_path)
-
     for file in os.listdir(self.corpus_path):
       file_tokens = self.get_tokens(file)
 
@@ -117,8 +132,9 @@ class DatasetProvider:
 
       subj_id = int(file.split('.')[0])
       code_vec = [0] * len(self.code2int)
-      for code in subj2codes[subj_id]:
-        code_vec[self.code2int[code]] = 1
+      for icd9_code in self.subj2codes[subj_id]:
+        icd9_category = icd9_code[0:3]
+        code_vec[self.code2int[icd9_category]] = 1
       codes.append(code_vec)
 
     return examples, codes
@@ -132,4 +148,4 @@ if __name__ == "__main__":
   code_file = os.path.join(base, cfg.get('data', 'codes'))
 
   dataset = DatasetProvider(train_dir, code_file)
-  
+  print len(dataset.code2int)
