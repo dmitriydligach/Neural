@@ -76,3 +76,7 @@ if __name__ == "__main__":
 
   f1 = f1_score(test_y, distribution, average='macro')
   print "f1 =", f1
+
+  f1_scores = f1_score(test_y, distribution, average=None)
+  print f1_scores
+  

@@ -8,7 +8,7 @@ import glob, string, collections, operator
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path, code_path, maxsize=25000):
+  def __init__(self, corpus_path, code_path, maxsize=10000):
     """Index words by frequency in a file"""
 
     self.alphabet_file = 'alphabet.txt'
