@@ -62,7 +62,7 @@ class DatasetProvider:
     for token, count in token_counts.most_common():
       outfile.write('%s|%s\n' % (token, count))
 
-  def read_alphabet(self, mintf=50):
+  def read_alphabet(self, mintf=100):
     """Read alphabet from file to token2int"""
 
     index = 1
@@ -92,7 +92,7 @@ class DatasetProvider:
       self.code2int[code] = index
       index = index + 1
 
-  def map_subject_to_codes(self):
+  def map_subjects_to_codes(self):
     """Dictionary mapping subject ids to icd9 codes"""
 
     frame = pandas.read_csv(self.code_path)
@@ -100,12 +100,21 @@ class DatasetProvider:
     for subj_id, icd9_code in zip(frame.SUBJECT_ID, frame.ICD9_CODE):
       if subj_id not in self.subj2codes:
         self.subj2codes[subj_id] = set()
-      self.subj2codes[subj_id].add(str(icd9_code))
+      icd9_category = str(icd9_code)[0:3]
+      self.subj2codes[subj_id].add(icd9_category)
+
+    code_counter = collections.Counter()
+    for codes in self.subj2codes.values():
+      code_counter.update(codes)
+
+    outfile = open('codes.txt', 'w')
+    for code, count in code_counter.most_common():
+      outfile.write('%s|%s\n' % (code, count))
 
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""
 
-    self.map_subject_to_codes()
+    self.map_subjects_to_codes()
 
     codes = []
     examples = []
@@ -127,8 +136,7 @@ class DatasetProvider:
 
       subj_id = int(file.split('.')[0])
       code_vec = [0] * len(self.code2int)
-      for icd9_code in self.subj2codes[subj_id]:
-        icd9_category = icd9_code[0:3]
+      for icd9_category in self.subj2codes[subj_id]:
         code_vec[self.code2int[icd9_category]] = 1
       codes.append(code_vec)
 
