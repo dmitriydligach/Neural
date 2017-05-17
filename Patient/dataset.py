@@ -8,7 +8,7 @@ import glob, string, collections, operator
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path, code_path, maxsize=10000):
+  def __init__(self, corpus_path, code_path, maxsize=25000):
     """Index words by frequency in a file"""
 
     self.alphabet_file = 'alphabet.txt'
@@ -24,7 +24,7 @@ class DatasetProvider:
     if not os.path.isfile(self.alphabet_file):
       self.write_alphabet()
     self.read_alphabet()
-    self.make_code_alphabet()
+    self.map_codes()
 
   def get_ngrams(self, file_name):
     """Return file as a list of ngrams"""
@@ -73,56 +73,60 @@ class DatasetProvider:
         self.token2int[token] = index
         index = index + 1
 
-  def make_code_alphabet(self):
-    """Map codes to integers"""
-
-    # category: first three digits
-    # subcategory: fourth digit
-    # subclassification: fifth digit
-    # for now only using icd9 categories
-
-    codes = set()
-    frame = pandas.read_csv(self.code_path)
-    for icd9_code in frame.ICD9_CODE:
-      icd9_category = str(icd9_code)[0:3]
-      codes.add(icd9_category)
-
-    index = 0
-    for code in codes:
-      self.code2int[code] = index
-      index = index + 1
-
-  def map_subjects_to_codes(self):
-    """Dictionary mapping subject ids to icd9 codes"""
+  def map_codes(self):
+    """Map subjects to codes and map codes to integers"""
 
     frame = pandas.read_csv(self.code_path)
 
+    # map subjects to codes first
     for subj_id, icd9_code in zip(frame.SUBJECT_ID, frame.ICD9_CODE):
       if subj_id not in self.subj2codes:
         self.subj2codes[subj_id] = set()
       icd9_category = str(icd9_code)[0:3]
       self.subj2codes[subj_id].add(icd9_category)
 
+    # count code frequencies and write them to file
     code_counter = collections.Counter()
     for codes in self.subj2codes.values():
       code_counter.update(codes)
-
     outfile = open('codes.txt', 'w')
     for code, count in code_counter.most_common():
       outfile.write('%s|%s\n' % (code, count))
 
+    # make code alphabet for 100 most frequent codes
+    index = 0
+    for code, count in code_counter.most_common():
+      if count > 100: # more than n docs with this code
+        self.code2int[code] = index
+        index = index + 1
+
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""
 
-    self.map_subjects_to_codes()
-
     codes = []
     examples = []
+
     for file in os.listdir(self.corpus_path):
       file_ngrams = self.get_ngrams(file)
+
+      # is this file too long?
       if file_ngrams == None:
         continue
 
+      # make code vector for this example
+      subj_id = int(file.split('.')[0])
+      if len(self.subj2codes[subj_id]) == 0:
+        print 'skipping file:', file
+        continue # no codes for this file
+
+      code_vec = [0] * len(self.code2int)
+      for icd9_category in self.subj2codes[subj_id]:
+        if icd9_category in self.code2int:
+          # this icd9 has enough examples
+          code_vec[self.code2int[icd9_category]] = 1
+      codes.append(code_vec)
+
+      # make feature vector for this example
       example = []
       for token in file_ngrams:
         if token in self.token2int:
@@ -133,12 +137,6 @@ class DatasetProvider:
       if len(example) > maxlen:
         example = example[0:maxlen]
       examples.append(example)
-
-      subj_id = int(file.split('.')[0])
-      code_vec = [0] * len(self.code2int)
-      for icd9_category in self.subj2codes[subj_id]:
-        code_vec[self.code2int[icd9_category]] = 1
-      codes.append(code_vec)
 
     return examples, codes
 
