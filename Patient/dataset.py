@@ -73,7 +73,7 @@ class DatasetProvider:
         self.token2int[token] = index
         index = index + 1
 
-  def map_codes(self, min_docs_per_code=500):
+  def map_codes(self, min_examples_per_code=500):
     """Map subjects to codes and map codes to integers"""
 
     frame = pandas.read_csv(self.code_path)
@@ -93,10 +93,10 @@ class DatasetProvider:
     for code, count in code_counter.most_common():
       outfile.write('%s|%s\n' % (code, count))
 
-    # make code alphabet for 100 most frequent codes
+    # make code alphabet for frequent codes
     index = 0
     for code, count in code_counter.most_common():
-      if count > min_docs_per_code:
+      if count > min_examples_per_code:
         self.code2int[code] = index
         index = index + 1
 

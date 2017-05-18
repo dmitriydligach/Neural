@@ -75,10 +75,10 @@ if __name__ == "__main__":
   distribution[distribution >= 0.5] = 1
 
   f1 = f1_score(test_y, distribution, average='macro')
-  print "f1 =", f1
+  print "macro average f1 =", f1
 
+  outf1 = open('results.txt', 'w')
+  int2code = dict((value, key) for key, value in dataset.code2int.items())
   f1_scores = f1_score(test_y, distribution, average=None)
-  print 'per class f1:'
-  print f1_scores
-  print 'average:', sum(f1_scores) / len(f1_scores)
-  
+  for index, f1 in enumerate(f1_scores):
+    outf1.write("%s|%s\n" % (int2code[index], f1))
