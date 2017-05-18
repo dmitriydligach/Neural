@@ -62,18 +62,18 @@ class DatasetProvider:
     for token, count in token_counts.most_common():
       outfile.write('%s|%s\n' % (token, count))
 
-  def read_alphabet(self, mintf=100):
+  def read_alphabet(self, min_tf=100):
     """Read alphabet from file to token2int"""
 
     index = 1
     self.token2int['oov_word'] = 0
     for line in open(self.alphabet_file):
       token, count = line.strip().split('|')
-      if int(count) > mintf:
+      if int(count) > min_tf:
         self.token2int[token] = index
         index = index + 1
 
-  def map_codes(self):
+  def map_codes(self, min_docs_per_code=500):
     """Map subjects to codes and map codes to integers"""
 
     frame = pandas.read_csv(self.code_path)
@@ -96,7 +96,7 @@ class DatasetProvider:
     # make code alphabet for 100 most frequent codes
     index = 0
     for code, count in code_counter.most_common():
-      if count > 100: # more than n docs with this code
+      if count > min_docs_per_code:
         self.code2int[code] = index
         index = index + 1
 

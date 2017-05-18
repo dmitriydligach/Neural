@@ -78,5 +78,7 @@ if __name__ == "__main__":
   print "f1 =", f1
 
   f1_scores = f1_score(test_y, distribution, average=None)
+  print 'per class f1:'
   print f1_scores
+  print 'average:', sum(f1_scores) / len(f1_scores)
   
