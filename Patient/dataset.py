@@ -8,13 +8,13 @@ import glob, string, collections, operator
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path, code_path, maxsize=10000):
+  def __init__(self, corpus_path, code_path, max_tokens=10000):
     """Index words by frequency in a file"""
 
     self.alphabet_file = 'alphabet.txt'
     self.corpus_path = corpus_path
     self.code_path = code_path
-    self.max_tokens = maxsize # max tokens in file
+    self.max_tokens = max_tokens # max tokens in file
 
     self.token2int = {} # words indexed by frequency
     self.code2int = {}  # class to int mapping
@@ -22,8 +22,11 @@ class DatasetProvider:
 
     # making alphabet is expensive so do it once
     if not os.path.isfile(self.alphabet_file):
+      print 'making alphabet and writing it to file...'
       self.write_alphabet()
+    print 'reading alphabet from file...'
     self.read_alphabet()
+    print 'mapping codes...'
     self.map_codes()
 
   def get_ngrams(self, file_name):
@@ -50,13 +53,15 @@ class DatasetProvider:
   def write_alphabet(self):
     """Write unique corpus tokens to file"""
 
-    tokens = [] # entire corpus
+    # read entire corpus to list!
+    tokens = []
     for file in os.listdir(self.corpus_path):
-      file_ngrams = self.get_ngrams(file)
-      if file_ngrams == None:
+      file_ngram_list = self.get_ngrams(file)
+      if file_ngram_list == None:
         continue
-      tokens.extend(file_ngrams)
+      tokens.extend(file_ngram_list)
 
+    # get unique tokens (corpus still in memory!)
     outfile = open(self.alphabet_file, 'w')
     token_counts = collections.Counter(tokens)
     for token, count in token_counts.most_common():
@@ -107,10 +112,10 @@ class DatasetProvider:
     examples = []
 
     for file in os.listdir(self.corpus_path):
-      file_ngrams = self.get_ngrams(file)
+      file_ngram_list = self.get_ngrams(file)
 
       # is this file too long?
-      if file_ngrams == None:
+      if file_ngram_list == None:
         continue
 
       # make code vector for this example
@@ -128,7 +133,7 @@ class DatasetProvider:
 
       # make feature vector for this example
       example = []
-      for token in file_ngrams:
+      for token in set(file_ngram_list):
         if token in self.token2int:
           example.append(self.token2int[token])
         else:
