@@ -6,17 +6,21 @@ sys.dont_write_bytecode = True
 ALPHABET = 'alphabet.txt' # alphabet file
 MINTF = 100 # minimum term frequency in corpus
 
-def make_training_examples(sentence):
-  """Make training examples from a sentence"""
+def make_train_examples(tokens):
+  """Make training examples from a token list"""
 
   # sentence: one two three
   # examples: one|two, one, two|three
 
   examples = []
-  for label_index in range(1, len(sentence)):
-    example = sentence[0:label_index]
-    label = sentence[label_index]
-    print example, " -> ", label
+  labels = []
+  for label_index in range(1, len(tokens)):
+    example = tokens[0:label_index]
+    label = tokens[label_index]
+    examples.append(example)
+    labels.append(label)
+
+  return examples, labels
 
 class DatasetProvider:
   """Corpus for training a language model"""
@@ -29,26 +33,27 @@ class DatasetProvider:
     self.token2int = {} # words indexed by frequency
     self.int2token = {} # reversed index
 
-    # making alphabet is expensive so do it once
+    # Making alphabet is expensive so do it once
     if not os.path.isfile(ALPHABET):
       print 'making alphabet and writing it to file...'
       self.make_alphabet()
     print 'reading alphabet from file...'
     self.read_alphabet()
 
+  def get_tokens(self, sentence):
+    """Preprocesses and tokenize a sentence"""
+
+    sentence = sentence.replace('|', '')
+    return ['<s>'] + sentence.split() + ['</s>']
+
   def make_alphabet(self):
     """Write unique corpus tokens to file"""
 
-    # read entire corpus to list!
-    corpus_tokens = []
-    for sentence in open(self.path):
-      # sentence_tokens = ['<s>'] + sentence.split() + ['</s>']
-      sentence_tokens = sentence.split()
-      corpus_tokens.extend(sentence_tokens)
+    token_counts = collections.Counter()
+    for line in open(self.path):
+      token_counts.update(self.get_tokens(line))
 
-    # get unique tokens (corpus still in memory!)
     outfile = open(ALPHABET, 'w')
-    token_counts = collections.Counter(corpus_tokens)
     for token, count in token_counts.most_common():
       outfile.write('%s|%s\n' % (token, count))
 
@@ -61,26 +66,35 @@ class DatasetProvider:
       token, count = line.strip().split('|')
       if int(count) > MINTF:
         self.token2int[token] = index
+        self.int2token[index] = token
         index = index + 1
 
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""
 
-    examples = []
-    for sentence in open(self.path):
-      sentence_tokens = ['<s>'] + sentence.split() + ['</s>']
-      sentence_indices = []
-      for token in sentence_tokens:
+    xs = []
+    ys = []
+
+    for line in open(self.path):
+
+      indices = [] # sentence as list of integers
+      for token in self.get_tokens(line):
         if token in self.token2int:
-          sentence_indices.append(self.token2int[token])
+          indices.append(self.token2int[token])
         else:
-          sentence_indices.append(self.token2int['oov_word'])
+          indices.append(self.token2int['oov_word'])
 
-      if len(example) > maxlen:
-        example = example[0:maxlen]
-      examples.append(example)
+      # generate training examples from a sentence
+      examples, labels = make_train_examples(indices)
 
-    return examples, codes
+      # attach examples generated from sent to list
+      for example in examples:
+        if len(example) > maxlen:
+          example = example[0:maxlen]
+        xs.append(example)
+      ys.extend(labels)
+
+    return xs, ys
 
 if __name__ == "__main__":
 
@@ -89,8 +103,14 @@ if __name__ == "__main__":
   base = os.environ['DATA_ROOT']
   train_file = os.path.join(base, cfg.get('data', 'train'))
 
-
   t0 = time.time()
   dataset = DatasetProvider(train_file)
   t1 = time.time()
   print 'execute time:', t1 - t0
+
+  examples, labels = dataset.load()
+  print len(examples), len(labels)
+  print
+  print examples
+  print
+  print labels
