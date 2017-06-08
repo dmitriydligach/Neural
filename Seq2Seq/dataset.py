@@ -11,16 +11,16 @@ class DatasetProvider:
     """Index words by frequency in a file"""
 
     self.path = path
-    self.input2int, self.int2input = \
-            utils.make_alphabet(path, '|', 0)
-    self.output2int, self.int2output = \
-            utils.make_alphabet(path, '|', 1)
+    # make alphabet for the input tokens
+    self.input2int, self.int2input = utils.make_alphabet(path, 0)
+    # make alphabet for the output tokens
+    self.output2int, self.int2output = utils.make_alphabet(path, 1)
 
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""
 
-    xs = utils.get_int_seq(self.path, '|', 0, self.input2int)
-    ys = utils.get_int_seq(self.path, '|', 1, self.output2int)
+    xs = utils.convert_to_int_seqs(self.path, 0, self.input2int)
+    ys = utils.convert_to_int_seqs(self.path, 1, self.output2int)
 
     return xs, ys
 
@@ -34,4 +34,5 @@ if __name__ == "__main__":
   dataset = DatasetProvider(train_file)
   examples, labels = dataset.load()
 
-  print dataset.int2output[1]
+  print labels
+  
