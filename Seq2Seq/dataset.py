@@ -34,5 +34,5 @@ if __name__ == "__main__":
   dataset = DatasetProvider(train_file)
   examples, labels = dataset.load()
 
-  print labels
-  
+  utils.make_alphabet_and_write(train_file, 'input_vocabulary.txt', 0)
+  utils.make_alphabet_and_write(train_file, 'output_vocabulary.txt', 1)

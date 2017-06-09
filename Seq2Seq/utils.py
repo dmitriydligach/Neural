@@ -25,6 +25,21 @@ def make_alphabet(path, field, delimiter='|'):
 
   return token2int, int2token
 
+def make_alphabet_and_write(path, outfile, field, delimiter='|'):
+  """Make alphabet and write to a file"""
+
+  token2int = {} # token to integer map
+
+  token_counts = collections.Counter()
+  for line in open(path):
+    elements = line.strip().split(delimiter)
+    tokens = elements[field].split()
+    token_counts.update(tokens)
+
+  outfile = open(outfile, 'w')
+  for token, count in token_counts.most_common():
+    outfile.write('%s\t%s\n' % (token, count))
+
 def convert_to_int_seq(token_list, token2int, maxlen=float('inf')):
   """Convert list of tokens to a sequence of integers"""
 
