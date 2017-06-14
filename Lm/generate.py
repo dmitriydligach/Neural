@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''Example script to generate text from Nietzsche's writings.
 
 At least 20 epochs are required before the generated text
@@ -17,11 +19,14 @@ from keras.layers import LSTM
 from keras.optimizers import RMSprop
 from keras.utils.data_utils import get_file
 import numpy as np
-import random
-import sys
+import random, sys, os, ConfigParser
 
-path = get_file('nietzsche.txt', origin='https://s3.amazonaws.com/text-datasets/nietzsche.txt')
-text = open(path).read().lower()
+cfg = ConfigParser.ConfigParser()
+cfg.read(sys.argv[1])
+base = os.environ['DATA_ROOT']
+train_file = os.path.join(base, cfg.get('data', 'train'))
+
+text = open(train_file).read().lower()
 print('corpus length:', len(text))
 
 chars = sorted(list(set(text)))
