@@ -5,29 +5,40 @@ import ConfigParser, os, nltk, pandas, sys
 sys.dont_write_bytecode = True
 import glob, string, collections, operator
 
+ALPHABET_FILE = 'alphabet.txt'
+CODE_FREQ_FILE = 'codes.txt'
+DIAG_ICD9_FILE = 'DIAGNOSES_ICD.csv'
+PROC_ICD9_FILE = 'PROCEDURES_ICD.csv'
+MIN_TOKEN_FREQ = 100
+MAX_TOKENS_IN_FILE = 10000
+MIN_EXAMPLES_PER_CODE = 500
+
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path, code_path, max_tokens=10000):
+  def __init__(self, corpus_path, code_dir):
     """Index words by frequency in a file"""
 
-    self.alphabet_file = 'alphabet.txt'
+    self.alphabet_file = ALPHABET_FILE
     self.corpus_path = corpus_path
-    self.code_path = code_path
-    self.max_tokens = max_tokens # max tokens in file
+    self.code_dir = code_dir
 
-    self.token2int = {} # words indexed by frequency
-    self.code2int = {}  # class to int mapping
+    self.token2int = {}  # words indexed by frequency
+    self.code2int = {}   # class to int mapping
     self.subj2codes = {} # subj_id to set of icd9 codes
 
-    # making alphabet is expensive so do it once
+    # making token alphabet is expensive so do it once
     if not os.path.isfile(self.alphabet_file):
       print 'making alphabet and writing it to file...'
-      self.write_alphabet()
+      self.make_and_write_token_alphabet()
     print 'reading alphabet from file...'
-    self.read_alphabet()
+    self.read_token_alphabet()
     print 'mapping codes...'
-    self.map_codes()
+    diag_code_file = os.path.join(self.code_dir, DIAG_ICD9_FILE)
+    proc_code_file = os.path.join(self.code_dir, PROC_ICD9_FILE)
+    self.map_subjects_to_codes(diag_code_file, 'diag', 3)
+    self.map_subjects_to_codes(proc_code_file, 'proc', 2)
+    self.make_code_alphabet()
 
   def get_ngrams(self, file_name):
     """Return file as a list of ngrams"""
@@ -40,7 +51,7 @@ class DatasetProvider:
       if token.isalpha():
         tokens.append(token)
 
-    if len(tokens) > self.max_tokens:
+    if len(tokens) > MAX_TOKENS_IN_FILE:
       return None
 
     ngram_list = []
@@ -50,7 +61,7 @@ class DatasetProvider:
 
     return ngram_list
 
-  def write_alphabet(self):
+  def make_and_write_token_alphabet(self):
     """Write unique corpus tokens to file"""
 
     # read entire corpus to list!
@@ -67,56 +78,56 @@ class DatasetProvider:
     for token, count in token_counts.most_common():
       outfile.write('%s|%s\n' % (token, count))
 
-  def read_alphabet(self, min_tf=100):
+  def read_token_alphabet(self):
     """Read alphabet from file to token2int"""
 
     index = 1
     self.token2int['oov_word'] = 0
     for line in open(self.alphabet_file):
       token, count = line.strip().split('|')
-      if int(count) > min_tf:
+      if int(count) > MIN_TOKEN_FREQ:
         self.token2int[token] = index
         index = index + 1
 
-  def map_codes(self, min_examples_per_code=500):
-    """Map subjects to codes and map codes to integers"""
+  def map_subjects_to_codes(self, code_file, prefix, num_digits):
+    """Map subjects to codes"""
 
-    frame = pandas.read_csv(self.code_path)
+    frame = pandas.read_csv(code_file)
 
-    # map subjects to codes first
     for subj_id, icd9_code in zip(frame.SUBJECT_ID, frame.ICD9_CODE):
       if subj_id not in self.subj2codes:
         self.subj2codes[subj_id] = set()
-      icd9_category = str(icd9_code)[0:3]
+      icd9_category = '%s_%s' % (prefix, str(icd9_code)[0:num_digits])
       self.subj2codes[subj_id].add(icd9_category)
+
+  def make_code_alphabet(self):
+    """Map codes to integers"""
 
     # count code frequencies and write them to file
     code_counter = collections.Counter()
     for codes in self.subj2codes.values():
       code_counter.update(codes)
-    outfile = open('codes.txt', 'w')
+    outfile = open(CODE_FREQ_FILE, 'w')
     for code, count in code_counter.most_common():
       outfile.write('%s|%s\n' % (code, count))
 
     # make code alphabet for frequent codes
     index = 0
     for code, count in code_counter.most_common():
-      if count > min_examples_per_code:
+      if count > MIN_EXAMPLES_PER_CODE:
         self.code2int[code] = index
         index = index + 1
 
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""
 
-    codes = []
-    examples = []
+    codes = []    # each example has multiple codes
+    examples = [] # int sequence represents each example
 
     for file in os.listdir(self.corpus_path):
       file_ngram_list = self.get_ngrams(file)
-
-      # is this file too long?
       if file_ngram_list == None:
-        continue
+        continue # file too long
 
       # make code vector for this example
       subj_id = int(file.split('.')[0])
