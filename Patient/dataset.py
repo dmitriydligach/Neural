@@ -19,7 +19,6 @@ class DatasetProvider:
   def __init__(self, corpus_path, code_dir):
     """Index words by frequency in a file"""
 
-    self.alphabet_file = ALPHABET_FILE
     self.corpus_path = corpus_path
     self.code_dir = code_dir
 
@@ -28,7 +27,7 @@ class DatasetProvider:
     self.subj2codes = {} # subj_id to set of icd9 codes
 
     # making token alphabet is expensive so do it once
-    if not os.path.isfile(self.alphabet_file):
+    if not os.path.isfile(ALPHABET_FILE):
       print 'making alphabet and writing it to file...'
       self.make_and_write_token_alphabet()
     print 'reading alphabet from file...'
@@ -61,19 +60,30 @@ class DatasetProvider:
 
     return ngram_list
 
+  def get_cuis(self, file_name):
+    """Return file as a list of CUIs"""
+
+    infile = os.path.join(self.corpus_path, file_name)
+    text = open(infile).read().lower()
+    tokens = [token for token in text.split()]
+    if len(tokens) > MAX_TOKENS_IN_FILE:
+      return None
+
+    return tokens
+
   def make_and_write_token_alphabet(self):
     """Write unique corpus tokens to file"""
 
     # read entire corpus to list!
     tokens = []
     for file in os.listdir(self.corpus_path):
-      file_ngram_list = self.get_ngrams(file)
+      file_ngram_list = self.get_cuis(file)
       if file_ngram_list == None:
         continue
       tokens.extend(file_ngram_list)
 
     # get unique tokens (corpus still in memory!)
-    outfile = open(self.alphabet_file, 'w')
+    outfile = open(ALPHABET_FILE, 'w')
     token_counts = collections.Counter(tokens)
     for token, count in token_counts.most_common():
       outfile.write('%s|%s\n' % (token, count))
@@ -83,7 +93,7 @@ class DatasetProvider:
 
     index = 1
     self.token2int['oov_word'] = 0
-    for line in open(self.alphabet_file):
+    for line in open(ALPHABET_FILE):
       token, count = line.strip().split('|')
       if int(count) > MIN_TOKEN_FREQ:
         self.token2int[token] = index
@@ -125,7 +135,7 @@ class DatasetProvider:
     examples = [] # int sequence represents each example
 
     for file in os.listdir(self.corpus_path):
-      file_ngram_list = self.get_ngrams(file)
+      file_ngram_list = self.get_cuis(file)
       if file_ngram_list == None:
         continue # file too long
 
