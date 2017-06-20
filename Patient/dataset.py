@@ -9,6 +9,7 @@ ALPHABET_FILE = 'alphabet.txt'
 CODE_FREQ_FILE = 'codes.txt'
 DIAG_ICD9_FILE = 'DIAGNOSES_ICD.csv'
 PROC_ICD9_FILE = 'PROCEDURES_ICD.csv'
+CPT_CODE_FILE = 'CPTEVENTS.csv'
 MIN_TOKEN_FREQ = 100
 MAX_TOKENS_IN_FILE = 10000
 MIN_EXAMPLES_PER_CODE = 500
@@ -35,8 +36,10 @@ class DatasetProvider:
     print 'mapping codes...'
     diag_code_file = os.path.join(self.code_dir, DIAG_ICD9_FILE)
     proc_code_file = os.path.join(self.code_dir, PROC_ICD9_FILE)
-    self.map_subjects_to_codes(diag_code_file, 'diag', 3)
-    self.map_subjects_to_codes(proc_code_file, 'proc', 2)
+    cpt_code_file = os.path.join(self.code_dir, CPT_CODE_FILE)
+    self.map_subjects_to_codes(diag_code_file, 'ICD9_CODE', 'diag', 3)
+    self.map_subjects_to_codes(proc_code_file, 'ICD9_CODE', 'proc', 2)
+    self.map_subjects_to_codes(cpt_code_file, 'CPT_NUMBER', 'cpt', 5)
     self.make_code_alphabet()
 
   def get_ngrams(self, file_name):
@@ -99,16 +102,20 @@ class DatasetProvider:
         self.token2int[token] = index
         index = index + 1
 
-  def map_subjects_to_codes(self, code_file, prefix, num_digits):
+  def map_subjects_to_codes(self,
+                            code_file,
+                            code_col,
+                            prefix,
+                            num_digits):
     """Map subjects to codes"""
 
     frame = pandas.read_csv(code_file)
 
-    for subj_id, icd9_code in zip(frame.SUBJECT_ID, frame.ICD9_CODE):
+    for subj_id, code in zip(frame.SUBJECT_ID, frame[code_col]):
       if subj_id not in self.subj2codes:
         self.subj2codes[subj_id] = set()
-      icd9_category = '%s_%s' % (prefix, str(icd9_code)[0:num_digits])
-      self.subj2codes[subj_id].add(icd9_category)
+      short_code = '%s_%s' % (prefix, str(code)[0:num_digits])
+      self.subj2codes[subj_id].add(short_code)
 
   def make_code_alphabet(self):
     """Map codes to integers"""
