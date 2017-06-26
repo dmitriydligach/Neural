@@ -17,6 +17,7 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Activation
 from keras.layers import GlobalAveragePooling1D
 from keras.layers.embeddings import Embedding
+from keras.models import load_model
 import dataset
 
 if __name__ == "__main__":
