@@ -51,7 +51,7 @@ if __name__ == "__main__":
                       input_length=maxlen))
   model.add(GlobalAveragePooling1D())
 
-  model.add(Dense(cfg.getint('cnn', 'hidden')))
+  model.add(Dense(cfg.getint('cnn', 'hidden'), name='ptvec'))
   model.add(Activation('relu'))
 
   model.add(Dense(classes))
@@ -66,6 +66,9 @@ if __name__ == "__main__":
             epochs=cfg.getint('cnn', 'epochs'),
             batch_size=cfg.getint('cnn', 'batch'),
             validation_split=0.0)
+
+  model.save('model.h5')
+  model = load_model('model.h5')
 
   # probability for each class; (test size, num of classes)
   distribution = model.predict(test_x, batch_size=cfg.getint('cnn', 'batch'))
