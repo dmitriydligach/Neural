@@ -157,6 +157,10 @@ class DatasetProvider:
         if icd9_category in self.code2int:
           # this icd9 has enough examples
           code_vec[self.code2int[icd9_category]] = 1
+
+      if sum(code_vec) == 0:
+        continue # all rare codes for this file
+
       codes.append(code_vec)
 
       # make feature vector for this example
@@ -169,6 +173,7 @@ class DatasetProvider:
 
       if len(example) > maxlen:
         example = example[0:maxlen]
+        
       examples.append(example)
 
     return examples, codes
