@@ -6,35 +6,19 @@ sys.dont_write_bytecode = True
 import glob, string, collections, operator
 
 ALPHABET_FILE = '../Codes/alphabet.txt'
-MIN_TOKEN_FREQ = 100
+MIN_TOKEN_FREQ = 100 # has to be the same for both datasets!
 
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path, code_dir):
+  def __init__(self, corpus_path):
     """Index words by frequency in a file"""
 
     self.corpus_path = corpus_path
-    self.code_dir = code_dir
 
-    self.token2int = {}  # words indexed by frequency
-    self.code2int = {}   # class to int mapping
-    self.subj2codes = {} # subj_id to set of icd9 codes
-
-    # making token alphabet is expensive so do it once
-    if not os.path.isfile(ALPHABET_FILE):
-      print 'making alphabet and writing it to file...'
-      self.make_and_write_token_alphabet()
-    print 'reading alphabet from file...'
+    self.token2int = {}
+    self.label2int = {'No':0, 'Yes':1}
     self.read_token_alphabet()
-    print 'mapping codes...'
-    diag_code_file = os.path.join(self.code_dir, DIAG_ICD9_FILE)
-    proc_code_file = os.path.join(self.code_dir, PROC_ICD9_FILE)
-    cpt_code_file = os.path.join(self.code_dir, CPT_CODE_FILE)
-    self.map_subjects_to_codes(diag_code_file, 'ICD9_CODE', 'diag', 3)
-    self.map_subjects_to_codes(proc_code_file, 'ICD9_CODE', 'proc', 2)
-    self.map_subjects_to_codes(cpt_code_file, 'CPT_NUMBER', 'cpt', 5)
-    self.make_code_alphabet()
 
   def get_cuis(self, file_name):
     """Return file as a list of CUIs"""
@@ -59,53 +43,38 @@ class DatasetProvider:
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""
 
-    codes = []    # each example has multiple codes
+    labels = []   # int labels
     examples = [] # int sequence represents each example
 
-    for file in os.listdir(self.corpus_path):
-      file_ngram_list = self.get_cuis(file)
-      if file_ngram_list == None:
-        continue # file too long
+    for d in os.listdir(self.corpus_path):
+      dir_path = os.path.join(self.corpus_path, d)
 
-      # make code vector for this example
-      subj_id = int(file.split('.')[0])
-      if len(self.subj2codes[subj_id]) == 0:
-        print 'skipping file:', file
-        continue # no codes for this file
+      for f in os.listdir(dir_path):
+        file_path = os.path.join(dir_path, f)
+        file_feat_list = self.get_cuis(file_path)
 
-      code_vec = [0] * len(self.code2int)
-      for icd9_category in self.subj2codes[subj_id]:
-        if icd9_category in self.code2int:
-          # this icd9 has enough examples
-          code_vec[self.code2int[icd9_category]] = 1
+        example = []
+        for token in set(file_feat_list):
+          if token in self.token2int:
+            example.append(self.token2int[token])
+          else:
+            example.append(self.token2int['oov_word'])
 
-      if sum(code_vec) == 0:
-        continue # all rare codes for this file
+        if len(example) > maxlen:
+          example = example[0:maxlen]
 
-      codes.append(code_vec)
+        examples.append(example)
+        labels.append(self.label2int[d])
 
-      # make feature vector for this example
-      example = []
-      for token in set(file_ngram_list):
-        if token in self.token2int:
-          example.append(self.token2int[token])
-        else:
-          example.append(self.token2int['oov_word'])
-
-      if len(example) > maxlen:
-        example = example[0:maxlen]
-
-      examples.append(example)
-
-    return examples, codes
+    return examples, labels
 
 if __name__ == "__main__":
 
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
   base = os.environ['DATA_ROOT']
-  train_dir = os.path.join(base, cfg.get('data', 'train'))
-  code_file = os.path.join(base, cfg.get('data', 'codes'))
+  data_dir = os.path.join(base, cfg.get('data', 'corpus'))
 
-  dataset = DatasetProvider(train_dir, code_file)
-  print len(dataset.code2int)
+  dataset = DatasetProvider(data_dir)
+  x, y = dataset.load()
+  print y
