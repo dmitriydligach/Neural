@@ -40,7 +40,8 @@ if __name__ == "__main__":
   print 'target x shape:', x.shape
 
   # conduct svm training
-  x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+  x_train, x_test, y_train, y_test = \
+    train_test_split(x, y, test_size=0.2, random_state=1)
   classifier = sk.svm.LinearSVC(class_weight='balanced')
   model = classifier.fit(x_train, y_train)
   predicted = classifier.predict(x_test)
