@@ -73,7 +73,7 @@ if __name__ == "__main__":
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
   base = os.environ['DATA_ROOT']
-  data_dir = os.path.join(base, cfg.get('data', 'corpus'))
+  data_dir = os.path.join(base, cfg.get('data', 'path'))
 
   dataset = DatasetProvider(data_dir)
   x, y = dataset.load()
