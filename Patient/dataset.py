@@ -5,19 +5,23 @@ import ConfigParser, os, nltk, pandas, sys
 sys.dont_write_bytecode = True
 import glob, string, collections, operator
 
-ALPHABET_FILE = '../Codes/alphabet.txt'
-MIN_TOKEN_FREQ = 100 # has to be the same for both datasets!
-
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path):
+  def __init__(self,
+               corpus_path,
+               alphabet_file,
+               min_token_freq):
     """Index words by frequency in a file"""
 
     self.corpus_path = corpus_path
+    self.alphabet_file = alphabet_file
+    self.min_token_freq = min_token_freq
 
     self.token2int = {}
     self.label2int = {'No':0, 'Yes':1}
+
+    # method must match what's used in source task
     self.read_token_alphabet()
 
   def get_cuis(self, file_name):
@@ -25,7 +29,16 @@ class DatasetProvider:
 
     infile = os.path.join(self.corpus_path, file_name)
     text = open(infile).read().lower()
-    tokens = [token for token in text.split()]
+
+    # source task trained on no-polarity cuis
+    # target task sometimes includes polarity
+    # tokens = [token for token in text.split()]
+    tokens = []
+    for token in text.split():
+      if token.startswith('-'):
+        tokens.append(token[1:])
+      else:
+        tokens.append(token)
 
     return tokens
 
@@ -34,9 +47,9 @@ class DatasetProvider:
 
     index = 1
     self.token2int['oov_word'] = 0
-    for line in open(ALPHABET_FILE):
+    for line in open(self.alphabet_file):
       token, count = line.strip().split('|')
-      if int(count) > MIN_TOKEN_FREQ:
+      if int(count) > self.min_token_freq:
         self.token2int[token] = index
         index = index + 1
 
