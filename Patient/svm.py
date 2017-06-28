@@ -7,11 +7,12 @@ import sys
 sys.path.append('../Lib/')
 sys.dont_write_bytecode = True
 import ConfigParser, os, numpy
-import sklearn as sk
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import cross_val_score
 import keras as k
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import load_model
@@ -34,7 +35,6 @@ if __name__ == "__main__":
   x, y = dataset.load()
   x = pad_sequences(x, maxlen=cfg.getint('data', 'maxlen'))
   print 'x shape (original):', x.shape
-  print 'y len:', len(y)
 
   # make vectors for target task
   model = load_model(cfg.get('data', 'model'))
@@ -47,7 +47,7 @@ if __name__ == "__main__":
   x_train, x_test, y_train, y_test = \
     train_test_split(x, y, test_size=0.2, random_state=1)
 
-  classifier = sk.svm.LinearSVC(class_weight='balanced')
+  classifier = LinearSVC(class_weight='balanced')
   model = classifier.fit(x_train, y_train)
   predicted = classifier.predict(x_test)
   precision = precision_score(y_test, predicted, pos_label=1)
@@ -57,3 +57,9 @@ if __name__ == "__main__":
   print 'p =', precision
   print 'r =', recall
   print 'f1 =', f1
+
+  classifier = LinearSVC(class_weight='balanced')
+  cv_scores = cross_val_score(classifier, x, y, scoring='f1', cv=5)
+
+  print 'cv scores:', cv_scores
+  print 'average:', np.mean(cv_scores)
