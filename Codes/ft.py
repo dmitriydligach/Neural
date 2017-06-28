@@ -20,15 +20,32 @@ from keras.layers.embeddings import Embedding
 from keras.models import load_model
 import dataset
 
+def print_config(cfg):
+  """Print configuration settings"""
+
+  print 'train:', cfg.get('data', 'train')
+  print 'batch:', cfg.get('nn', 'batch')
+  print 'epochs:', cfg.get('nn', 'epochs')
+  print 'embdims:', cfg.get('nn', 'embdims')
+  print 'hidden:', cfg.get('nn', 'hidden')
+  print 'learnrt:', cfg.get('nn', 'learnrt')
+
 if __name__ == "__main__":
 
   cfg = ConfigParser.ConfigParser()
   cfg.read(sys.argv[1])
+  print_config(cfg)
+
   base = os.environ['DATA_ROOT']
   train_dir = os.path.join(base, cfg.get('data', 'train'))
   code_file = os.path.join(base, cfg.get('data', 'codes'))
 
-  dataset = dataset.DatasetProvider(train_dir, code_file)
+  dataset = dataset.DatasetProvider(
+    train_dir,
+    code_file,
+    cfg.getint('args', 'min_token_freq'),
+    cfg.getint('args', 'max_tokens_in_file'),
+    cfg.getint('args', 'min_examples_per_code'))
   x, y = dataset.load()
   train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.20)
   maxlen = max([len(seq) for seq in train_x])
@@ -44,35 +61,35 @@ if __name__ == "__main__":
   print 'test_x shape:', test_x.shape
   print 'test_y shape:', test_y.shape
   print 'unique features:', len(dataset.token2int)
-  print 'train_x size in bytes:', train_x.size * train_x.itemsize
 
+  # model definition
   model = Sequential()
   model.add(Embedding(len(dataset.token2int),
-                      cfg.getint('cnn', 'embdims'),
+                      cfg.getint('nn', 'embdims'),
                       input_length=maxlen))
   model.add(GlobalAveragePooling1D())
 
-  model.add(Dense(cfg.getint('cnn', 'hidden'), name='ptvec'))
+  model.add(Dense(cfg.getint('nn', 'hidden'), name='ptvec'))
   model.add(Activation('relu'))
 
   model.add(Dense(classes))
   model.add(Activation('sigmoid'))
 
-  optimizer = RMSprop(lr=cfg.getfloat('cnn', 'learnrt'))
+  optimizer = RMSprop(lr=cfg.getfloat('nn', 'learnrt'))
   model.compile(loss='binary_crossentropy',
                 optimizer=optimizer,
                 metrics=['accuracy'])
   model.fit(train_x,
             train_y,
-            epochs=cfg.getint('cnn', 'epochs'),
-            batch_size=cfg.getint('cnn', 'batch'),
+            epochs=cfg.getint('nn', 'epochs'),
+            batch_size=cfg.getint('nn', 'batch'),
             validation_split=0.0)
 
   model.save('model.h5')
   model = load_model('model.h5')
 
   # probability for each class; (test size, num of classes)
-  distribution = model.predict(test_x, batch_size=cfg.getint('cnn', 'batch'))
+  distribution = model.predict(test_x, batch_size=cfg.getint('nn', 'batch'))
 
   # turn into an indicator matrix
   distribution[distribution < 0.5] = 0

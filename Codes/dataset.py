@@ -10,18 +10,23 @@ CODE_FREQ_FILE = 'codes.txt'
 DIAG_ICD9_FILE = 'DIAGNOSES_ICD.csv'
 PROC_ICD9_FILE = 'PROCEDURES_ICD.csv'
 CPT_CODE_FILE = 'CPTEVENTS.csv'
-MIN_TOKEN_FREQ = 100
-MAX_TOKENS_IN_FILE = 10000
-MIN_EXAMPLES_PER_CODE = 500
 
 class DatasetProvider:
   """THYME relation data"""
 
-  def __init__(self, corpus_path, code_dir):
+  def __init__(self,
+               corpus_path,
+               code_dir,
+               min_token_freq,
+               max_tokens_in_file,
+               min_examples_per_code):
     """Index words by frequency in a file"""
 
     self.corpus_path = corpus_path
     self.code_dir = code_dir
+    self.min_token_freq = min_token_freq
+    self.max_tokens_in_file = max_tokens_in_file
+    self.min_examples_per_code = min_examples_per_code
 
     self.token2int = {}  # words indexed by frequency
     self.code2int = {}   # class to int mapping
@@ -53,7 +58,7 @@ class DatasetProvider:
       if token.isalpha():
         tokens.append(token)
 
-    if len(tokens) > MAX_TOKENS_IN_FILE:
+    if len(tokens) > self.max_tokens_in_file:
       return None
 
     ngram_list = []
@@ -69,7 +74,7 @@ class DatasetProvider:
     infile = os.path.join(self.corpus_path, file_name)
     text = open(infile).read().lower()
     tokens = [token for token in text.split()]
-    if len(tokens) > MAX_TOKENS_IN_FILE:
+    if len(tokens) > self.max_tokens_in_file:
       return None
 
     return tokens
@@ -98,7 +103,7 @@ class DatasetProvider:
     self.token2int['oov_word'] = 0
     for line in open(ALPHABET_FILE):
       token, count = line.strip().split('|')
-      if int(count) > MIN_TOKEN_FREQ:
+      if int(count) > self.min_token_freq:
         self.token2int[token] = index
         index = index + 1
 
@@ -131,7 +136,7 @@ class DatasetProvider:
     # make code alphabet for frequent codes
     index = 0
     for code, count in code_counter.most_common():
-      if count > MIN_EXAMPLES_PER_CODE:
+      if count > self.min_examples_per_code:
         self.code2int[code] = index
         index = index + 1
 
@@ -173,7 +178,7 @@ class DatasetProvider:
 
       if len(example) > maxlen:
         example = example[0:maxlen]
-        
+
       examples.append(example)
 
     return examples, codes
