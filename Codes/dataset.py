@@ -83,20 +83,18 @@ class DatasetProvider:
   def make_and_write_token_alphabet(self):
     """Write unique corpus tokens to file"""
 
-    # read entire corpus to list!
-    tokens = []
+    # count tokens in the entire corpus
+    token_counts = collections.Counter()
     for file in os.listdir(self.corpus_path):
       file_ngram_list = self.get_cuis(file)
       if file_ngram_list == None:
         continue
-      tokens.extend(file_ngram_list)
+      token_counts.update(file_ngram_list)
 
-    # now make alphabet (corpus still in memory!)
+    # now make alphabet
     index = 1
     self.token2int['oov_word'] = 0
     outfile = open(ALPHABET_FILE, 'w')
-    token_counts = collections.Counter(tokens)
-
     for token, count in token_counts.most_common():
       outfile.write('%s|%s\n' % (token, count))
       if count > self.min_token_freq:
@@ -106,17 +104,6 @@ class DatasetProvider:
     # pickle alphabet
     pickle_file = open(ALPHABET_PICKLE, 'wb')
     pickle.dump(self.token2int, pickle_file)
-
-  def read_token_alphabet_obs(self):
-    """Read alphabet from file to token2int"""
-
-    index = 1
-    self.token2int['oov_word'] = 0
-    for line in open(ALPHABET_FILE):
-      token, count = line.strip().split('|')
-      if int(count) > self.min_token_freq:
-        self.token2int[token] = index
-        index = index + 1
 
   def map_subjects_to_codes(self,
                             code_file,
