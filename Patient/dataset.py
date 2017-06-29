@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import numpy
+import numpy, pickle
 import ConfigParser, os, nltk, pandas, sys
 sys.dont_write_bytecode = True
 import glob, string, collections, operator
@@ -10,19 +10,14 @@ class DatasetProvider:
 
   def __init__(self,
                corpus_path,
-               alphabet_file,
-               min_token_freq):
+               alphabet_pickle):
     """Index words by frequency in a file"""
 
     self.corpus_path = corpus_path
-    self.alphabet_file = alphabet_file
-    self.min_token_freq = min_token_freq
 
     self.token2int = {}
     self.label2int = {'No':0, 'Yes':1}
-
-    # method must match what's used in source task
-    self.read_token_alphabet()
+    self.token2int = pickle.load(open(alphabet_pickle, 'rb'))
 
   def get_cuis(self, file_name):
     """Return file as a list of CUIs"""
@@ -41,17 +36,6 @@ class DatasetProvider:
         tokens.append(token)
 
     return tokens
-
-  def read_token_alphabet(self):
-    """Read alphabet from file to token2int"""
-
-    index = 1
-    self.token2int['oov_word'] = 0
-    for line in open(self.alphabet_file):
-      token, count = line.strip().split('|')
-      if int(count) > self.min_token_freq:
-        self.token2int[token] = index
-        index = index + 1
 
   def load(self, maxlen=float('inf')):
     """Convert examples into lists of indices"""

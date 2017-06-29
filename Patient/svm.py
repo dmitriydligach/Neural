@@ -29,37 +29,42 @@ if __name__ == "__main__":
   # load target task data
   dataset = dataset.DatasetProvider(
     data_dir,
-    cfg.get('data', 'alphabet'),
-    cfg.getint('args', 'min_token_freq'))
+    cfg.get('data', 'alphabet_pickle'))
 
   x, y = dataset.load()
+  # pad to same maxlen as data in source model
   x = pad_sequences(x, maxlen=cfg.getint('data', 'maxlen'))
   print 'x shape (original):', x.shape
 
   # make vectors for target task
-  model = load_model(cfg.get('data', 'model'))
+  model = load_model(cfg.get('data', 'model_file'))
   interm_layer_model = Model(inputs=model.input,
                              outputs=model.get_layer('ptvec').output)
   x = interm_layer_model.predict(x)
   print 'x shape (new):', x.shape
 
-  # ready for svm train/test
-  x_train, x_test, y_train, y_test = \
-    train_test_split(x, y, test_size=0.2, random_state=1)
+  # ready for svm train/test now
 
-  classifier = LinearSVC(class_weight='balanced')
-  model = classifier.fit(x_train, y_train)
-  predicted = classifier.predict(x_test)
-  precision = precision_score(y_test, predicted, pos_label=1)
-  recall = recall_score(y_test, predicted, pos_label=1)
-  f1 = f1_score(y_test, predicted, pos_label=1)
+  if cfg.getfloat('data', 'test_size') == 0:
+    # run n-fold cross validation
+    classifier = LinearSVC(class_weight='balanced')
+    cv_scores = cross_val_score(classifier, x, y, scoring='f1', cv=5)
+    print 'cv scores:', cv_scores
+    print 'average:', np.mean(cv_scores)
 
-  print 'p =', precision
-  print 'r =', recall
-  print 'f1 =', f1
-
-  classifier = LinearSVC(class_weight='balanced')
-  cv_scores = cross_val_score(classifier, x, y, scoring='f1', cv=5)
-
-  print 'cv scores:', cv_scores
-  print 'average:', np.mean(cv_scores)
+  else:
+    # randomly allocate a test set
+    x_train, x_test, y_train, y_test = train_test_split(
+      x,
+      y,
+      test_size=cfg.getfloat('data', 'test_size'),
+      random_state=1)
+    classifier = LinearSVC(class_weight='balanced')
+    model = classifier.fit(x_train, y_train)
+    predicted = classifier.predict(x_test)
+    precision = precision_score(y_test, predicted, pos_label=1)
+    recall = recall_score(y_test, predicted, pos_label=1)
+    f1 = f1_score(y_test, predicted, pos_label=1)
+    print 'p =', precision
+    print 'r =', recall
+    print 'f1 =', f1
