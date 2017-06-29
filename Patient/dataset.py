@@ -15,7 +15,6 @@ class DatasetProvider:
 
     self.corpus_path = corpus_path
 
-    self.token2int = {}
     self.label2int = {'No':0, 'Yes':1}
     self.token2int = pickle.load(open(alphabet_pickle, 'rb'))
 
