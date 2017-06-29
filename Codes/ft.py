@@ -24,6 +24,7 @@ def print_config(cfg):
   """Print configuration settings"""
 
   print 'train:', cfg.get('data', 'train')
+  print 'test_size', cfg.getfloat('args', 'test_size')
   print 'batch:', cfg.get('nn', 'batch')
   print 'epochs:', cfg.get('nn', 'epochs')
   print 'embdims:', cfg.get('nn', 'embdims')
@@ -47,7 +48,10 @@ if __name__ == "__main__":
     cfg.getint('args', 'max_tokens_in_file'),
     cfg.getint('args', 'min_examples_per_code'))
   x, y = dataset.load()
-  train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.20)
+  train_x, test_x, train_y, test_y = train_test_split(
+    x,
+    y,
+    test_size=cfg.getfloat('args', 'test_size'))
   maxlen = max([len(seq) for seq in train_x])
 
   # turn x into numpy array among other things
@@ -87,7 +91,10 @@ if __name__ == "__main__":
             validation_split=0.0)
 
   model.save('model.h5')
-  model = load_model('model.h5')
+
+  # do we need to evaluate?
+  if cfg.getfloat('args', 'test_size') == 0:
+    exit()
 
   # probability for each class; (test size, num of classes)
   distribution = model.predict(test_x, batch_size=cfg.getint('nn', 'batch'))
