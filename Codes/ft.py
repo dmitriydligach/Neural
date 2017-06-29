@@ -60,7 +60,8 @@ if __name__ == "__main__":
   print 'train_y shape:', train_y.shape
   print 'test_x shape:', test_x.shape
   print 'test_y shape:', test_y.shape
-  print 'unique features:', len(dataset.token2int)
+  print 'number of features:', len(dataset.token2int)
+  print 'number of labels:', len(dataset.code2int)
 
   # model definition
   model = Sequential()

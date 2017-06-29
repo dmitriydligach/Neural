@@ -3,9 +3,10 @@
 import numpy
 import ConfigParser, os, nltk, pandas, sys
 sys.dont_write_bytecode = True
-import glob, string, collections, operator
+import glob, string, collections, operator, pickle
 
 ALPHABET_FILE = 'alphabet.txt'
+ALPHABET_PICKLE = 'alphabet.p'
 CODE_FREQ_FILE = 'codes.txt'
 DIAG_ICD9_FILE = 'DIAGNOSES_ICD.csv'
 PROC_ICD9_FILE = 'PROCEDURES_ICD.csv'
@@ -33,11 +34,11 @@ class DatasetProvider:
     self.subj2codes = {} # subj_id to set of icd9 codes
 
     # making token alphabet is expensive so do it once
-    if not os.path.isfile(ALPHABET_FILE):
-      print 'making alphabet and writing it to file...'
+    if not os.path.isfile(ALPHABET_PICKLE):
+      print 'making alphabet and dumping it to file...'
       self.make_and_write_token_alphabet()
-    print 'reading alphabet from file...'
-    self.read_token_alphabet()
+    print 'retrieving alphabet from file...'
+    self.token2int = pickle.load(open(ALPHABET_PICKLE, 'rb'))
     print 'mapping codes...'
     diag_code_file = os.path.join(self.code_dir, DIAG_ICD9_FILE)
     proc_code_file = os.path.join(self.code_dir, PROC_ICD9_FILE)
@@ -90,13 +91,23 @@ class DatasetProvider:
         continue
       tokens.extend(file_ngram_list)
 
-    # get unique tokens (corpus still in memory!)
+    # now make alphabet (corpus still in memory!)
+    index = 1
+    self.token2int['oov_word'] = 0
     outfile = open(ALPHABET_FILE, 'w')
     token_counts = collections.Counter(tokens)
+
     for token, count in token_counts.most_common():
       outfile.write('%s|%s\n' % (token, count))
+      if count > self.min_token_freq:
+        self.token2int[token] = index
+        index = index + 1
 
-  def read_token_alphabet(self):
+    # pickle alphabet
+    pickle_file = open(ALPHABET_PICKLE, 'wb')
+    pickle.dump(self.token2int, pickle_file)
+
+  def read_token_alphabet_obs(self):
     """Read alphabet from file to token2int"""
 
     index = 1
@@ -191,5 +202,10 @@ if __name__ == "__main__":
   train_dir = os.path.join(base, cfg.get('data', 'train'))
   code_file = os.path.join(base, cfg.get('data', 'codes'))
 
-  dataset = DatasetProvider(train_dir, code_file)
-  print len(dataset.code2int)
+  dataset = DatasetProvider(
+    train_dir,
+    code_file,
+    cfg.getint('args', 'min_token_freq'),
+    cfg.getint('args', 'max_tokens_in_file'),
+    cfg.getint('args', 'min_examples_per_code'))
+  x, y = dataset.load()
