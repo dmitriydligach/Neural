@@ -67,7 +67,7 @@ if __name__ == "__main__":
                       input_length=maxlen))
   model.add(GlobalAveragePooling1D())
 
-  model.add(Dropout(0.5))
+  model.add(Dropout(cfg.getfloat('nn', 'dropout')))
   model.add(Dense(cfg.getint('nn', 'hidden')))
   model.add(Activation('relu'))
 
