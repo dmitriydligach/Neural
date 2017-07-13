@@ -8,7 +8,7 @@ sys.path.append('../Lib/')
 sys.dont_write_bytecode = True
 import ConfigParser, os
 from sklearn.metrics import f1_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 import keras as k
 from keras.utils.np_utils import to_categorical
 from keras.optimizers import RMSprop
@@ -61,48 +61,46 @@ if __name__ == "__main__":
     cfg.getint('args', 'min_token_freq'))
   x, y = dataset.load()
 
-
-
-
-  train_x, test_x, train_y, test_y = train_test_split(
-    x,
-    y,
-    test_size=0.20)
-  maxlen = max([len(seq) for seq in train_x])
-
-  # turn x into numpy array among other things
   classes = len(dataset.label2int)
-  train_x = pad_sequences(train_x, maxlen=maxlen)
-  test_x = pad_sequences(test_x, maxlen=maxlen)
-  train_y = to_categorical(train_y, classes)
-  test_y = to_categorical(test_y, classes)
-  print 'train_x shape:', train_x.shape
-  print 'train_y shape:', train_y.shape
-  print 'test_x shape:', test_x.shape
-  print 'test_y shape:', test_y.shape
+  maxlen = max([len(seq) for seq in x])
+  x = pad_sequences(x, maxlen=maxlen)
+  y = to_categorical(y, classes)
+  print 'x shape:', x.shape
+  print 'y shape:', y.shape
   print 'number of features:', len(dataset.token2int)
 
-  model = get_model(cfg, len(dataset.token2int))
+  f1_scores = []
+  kf = KFold(n_splits=5, random_state=100)
+  for train_indices, test_indices in kf.split(x):
 
-  optimizer = RMSprop(lr=cfg.getfloat('nn', 'learnrt'))
-  model.compile(loss='categorical_crossentropy',
-                optimizer=optimizer,
-                metrics=['accuracy'])
-  model.fit(train_x,
-            train_y,
-            epochs=cfg.getint('nn', 'epochs'),
-            batch_size=cfg.getint('nn', 'batch'),
-            validation_split=0.0)
+    train_x = x[train_indices]
+    train_y = y[train_indices]
+    test_x = x[test_indices]
+    test_y = y[test_indices]
 
-  # probability for each class; (test size, num of classes)
-  distribution = model.predict(
-    test_x,
-    batch_size=cfg.getint('nn', 'batch'))
-  # class predictions; (test size,)
-  predictions = np.argmax(distribution, axis=1)
-  # gold labels; (test size,)
-  gold = np.argmax(test_y, axis=1)
+    model = get_model(cfg, len(dataset.token2int))
+    optimizer = RMSprop(lr=cfg.getfloat('nn', 'learnrt'))
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=optimizer,
+                  metrics=['accuracy'])
+    model.fit(train_x,
+              train_y,
+              epochs=cfg.getint('nn', 'epochs'),
+              batch_size=cfg.getint('nn', 'batch'),
+              validation_split=0.0)
 
-  # f1 scores
-  label_f1 = f1_score(gold, predictions, average=None)
-  print label_f1
+    # probability for each class; (test size, num of classes)
+    distribution = model.predict(
+      test_x,
+      batch_size=cfg.getint('nn', 'batch'))
+    # class predictions; (test size,)
+    predictions = np.argmax(distribution, axis=1)
+    # gold labels; (test size,)
+    gold = np.argmax(test_y, axis=1)
+
+    # f1 scores
+    label_f1 = f1_score(gold, predictions, average=None)
+    print label_f1
+    #f1_scores.append(label_f1[1])
+
+  #print np.mean(f1_scores)
