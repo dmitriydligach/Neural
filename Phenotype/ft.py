@@ -70,7 +70,7 @@ if __name__ == "__main__":
   print 'number of features:', len(dataset.token2int)
 
   f1_scores = []
-  kf = KFold(n_splits=5, random_state=100)
+  kf = KFold(n_splits=5, shuffle=True, random_state=100)
   for train_indices, test_indices in kf.split(x):
 
     train_x = x[train_indices]
@@ -87,7 +87,8 @@ if __name__ == "__main__":
               train_y,
               epochs=cfg.getint('nn', 'epochs'),
               batch_size=cfg.getint('nn', 'batch'),
-              validation_split=0.0)
+              validation_split=0.0,
+              verbose=0)
 
     # probability for each class; (test size, num of classes)
     distribution = model.predict(
@@ -100,7 +101,7 @@ if __name__ == "__main__":
 
     # f1 scores
     label_f1 = f1_score(gold, predictions, average=None)
-    print label_f1
-    #f1_scores.append(label_f1[1])
+    f1_scores.append(label_f1[1])
 
-  #print np.mean(f1_scores)
+  print 'all f1s:', f1_scores
+  print 'average f1:', np.mean(f1_scores)
