@@ -30,6 +30,24 @@ def print_config(cfg):
   print 'hidden:', cfg.get('nn', 'hidden')
   print 'learnrt:', cfg.get('nn', 'learnrt')
 
+def get_model(cfg, num_of_features):
+  """Model definition"""
+
+  model = Sequential()
+  model.add(Embedding(input_dim=num_of_features,
+                      output_dim=cfg.getint('nn', 'embdims'),
+                      input_length=maxlen))
+  model.add(GlobalAveragePooling1D())
+
+  model.add(Dropout(cfg.getfloat('nn', 'dropout')))
+  model.add(Dense(cfg.getint('nn', 'hidden')))
+  model.add(Activation('relu'))
+
+  model.add(Dense(classes))
+  model.add(Activation('softmax'))
+
+  return model
+
 if __name__ == "__main__":
 
   cfg = ConfigParser.ConfigParser()
@@ -42,6 +60,10 @@ if __name__ == "__main__":
     data_dir,
     cfg.getint('args', 'min_token_freq'))
   x, y = dataset.load()
+
+
+
+
   train_x, test_x, train_y, test_y = train_test_split(
     x,
     y,
@@ -60,19 +82,7 @@ if __name__ == "__main__":
   print 'test_y shape:', test_y.shape
   print 'number of features:', len(dataset.token2int)
 
-  # model definition
-  model = Sequential()
-  model.add(Embedding(input_dim=len(dataset.token2int),
-                      output_dim=cfg.getint('nn', 'embdims'),
-                      input_length=maxlen))
-  model.add(GlobalAveragePooling1D())
-
-  model.add(Dropout(cfg.getfloat('nn', 'dropout')))
-  model.add(Dense(cfg.getint('nn', 'hidden')))
-  model.add(Activation('relu'))
-
-  model.add(Dense(classes))
-  model.add(Activation('softmax'))
+  model = get_model(cfg, len(dataset.token2int))
 
   optimizer = RMSprop(lr=cfg.getfloat('nn', 'learnrt'))
   model.compile(loss='categorical_crossentropy',
