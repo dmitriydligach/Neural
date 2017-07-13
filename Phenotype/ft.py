@@ -14,7 +14,7 @@ from keras.utils.np_utils import to_categorical
 from keras.optimizers import RMSprop
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation
+from keras.layers.core import Dense, Activation, Dropout
 from keras.layers import GlobalAveragePooling1D
 from keras.layers.embeddings import Embedding
 from keras.models import load_model
@@ -67,6 +67,7 @@ if __name__ == "__main__":
                       input_length=maxlen))
   model.add(GlobalAveragePooling1D())
 
+  model.add(Dropout(0.5))
   model.add(Dense(cfg.getint('nn', 'hidden')))
   model.add(Activation('relu'))
 
