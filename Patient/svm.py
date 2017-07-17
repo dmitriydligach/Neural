@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
   if cfg.getfloat('data', 'test_size') == 0:
     # run n-fold cross validation
-    classifier = LinearSVC(class_weight='balanced')
+    classifier = LinearSVC(class_weight='balanced', C=0.001)
     cv_scores = cross_val_score(classifier, x, y, scoring='f1', cv=5)
     print 'fold f1s:', cv_scores
     print 'average f1:', np.mean(cv_scores)
