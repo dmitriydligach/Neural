@@ -20,6 +20,8 @@ from keras.layers.embeddings import Embedding
 from keras.models import load_model
 import dataset
 
+RESULTS_FILE = 'Model/results.txt'
+
 def print_config(cfg):
   """Print configuration settings"""
 
@@ -47,7 +49,7 @@ def get_model(cfg, num_of_features):
   model.add(Activation('sigmoid'))
 
   return model
-  
+
 if __name__ == "__main__":
 
   cfg = ConfigParser.ConfigParser()
@@ -86,7 +88,6 @@ if __name__ == "__main__":
   print 'number of labels:', len(dataset.code2int)
 
   model = get_model(cfg, len(dataset.token2int))
-
   optimizer = RMSprop(lr=cfg.getfloat('nn', 'learnrt'))
   model.compile(loss='binary_crossentropy',
                 optimizer=optimizer,
@@ -111,10 +112,11 @@ if __name__ == "__main__":
   distribution[distribution >= 0.5] = 1
 
   f1 = f1_score(test_y, distribution, average='macro')
-  print "macro average f1 =", f1
+  print 'macro average f1 =', f1
 
-  outf1 = open('results.txt', 'w')
+  outf1 = open(RESULTS_FILE, 'w')
   int2code = dict((value, key) for key, value in dataset.code2int.items())
   f1_scores = f1_score(test_y, distribution, average=None)
+  outf1.write("%s|%s\n" % ('macro', f1))
   for index, f1 in enumerate(f1_scores):
     outf1.write("%s|%s\n" % (int2code[index], f1))

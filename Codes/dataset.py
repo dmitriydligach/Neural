@@ -5,9 +5,9 @@ import ConfigParser, os, nltk, pandas, sys
 sys.dont_write_bytecode = True
 import glob, string, collections, operator, pickle
 
-ALPHABET_FILE = 'alphabet.txt'
-ALPHABET_PICKLE = 'alphabet.p'
-CODE_FREQ_FILE = 'codes.txt'
+ALPHABET_FILE = 'Model/alphabet.txt'
+ALPHABET_PICKLE = 'Model/alphabet.p'
+CODE_FREQ_FILE = 'Model/codes.txt'
 DIAG_ICD9_FILE = 'DIAGNOSES_ICD.csv'
 PROC_ICD9_FILE = 'PROCEDURES_ICD.csv'
 CPT_CODE_FILE = 'CPTEVENTS.csv'
@@ -92,6 +92,7 @@ class DatasetProvider:
       token_counts.update(file_ngram_list)
 
     # now make alphabet
+    # and save it in a file for debugging
     index = 1
     self.token2int['oov_word'] = 0
     outfile = open(ALPHABET_FILE, 'w')
