@@ -8,6 +8,8 @@ sys.path.append('../Lib/')
 sys.dont_write_bytecode = True
 import ConfigParser, os
 from sklearn.metrics import f1_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
 from sklearn.model_selection import train_test_split
 import keras as k
 from keras.utils.np_utils import to_categorical
@@ -21,6 +23,7 @@ from keras.models import load_model
 import dataset
 
 RESULTS_FILE = 'Model/results.txt'
+MODEL_FILE = 'Model/model.h5'
 
 def print_config(cfg):
   """Print configuration settings"""
@@ -98,7 +101,7 @@ if __name__ == "__main__":
             batch_size=cfg.getint('nn', 'batch'),
             validation_split=0.0)
 
-  model.save('model.h5')
+  model.save(MODEL_FILE)
 
   # do we need to evaluate?
   if cfg.getfloat('args', 'test_size') == 0:
@@ -112,6 +115,10 @@ if __name__ == "__main__":
   distribution[distribution >= 0.5] = 1
 
   f1 = f1_score(test_y, distribution, average='macro')
+  precision = precision_score(test_y, distribution, average='macro')
+  recall = recall_score(test_y, distribution, average='macro')
+  print 'macro average p =', precision
+  print 'macro average r =', recall
   print 'macro average f1 =', f1
 
   outf1 = open(RESULTS_FILE, 'w')
