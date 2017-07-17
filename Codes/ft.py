@@ -44,7 +44,7 @@ def get_model(cfg, num_of_features):
                       output_dim=cfg.getint('nn', 'embdims'),
                       input_length=maxlen,
                       name='EL'))
-  model.add(GlobalAveragePooling1D())
+  model.add(GlobalAveragePooling1D(name='AL'))
 
   model.add(Dense(cfg.getint('nn', 'hidden'), name='HL'))
   model.add(Activation('relu'))
