@@ -31,6 +31,23 @@ def print_config(cfg):
   print 'hidden:', cfg.get('nn', 'hidden')
   print 'learnrt:', cfg.get('nn', 'learnrt')
 
+def get_model(cfg, num_of_features):
+  """Model definition"""
+
+  model = Sequential()
+  model.add(Embedding(input_dim=num_of_features,
+                      output_dim=cfg.getint('nn', 'embdims'),
+                      input_length=maxlen))
+  model.add(GlobalAveragePooling1D())
+
+  model.add(Dense(cfg.getint('nn', 'hidden'), name='ptvec'))
+  model.add(Activation('relu'))
+
+  model.add(Dense(classes))
+  model.add(Activation('sigmoid'))
+
+  return model
+  
 if __name__ == "__main__":
 
   cfg = ConfigParser.ConfigParser()
@@ -60,6 +77,7 @@ if __name__ == "__main__":
   test_x = pad_sequences(test_x, maxlen=maxlen)
   train_y = np.array(train_y)
   test_y = np.array(test_y)
+
   print 'train_x shape:', train_x.shape
   print 'train_y shape:', train_y.shape
   print 'test_x shape:', test_x.shape
@@ -67,18 +85,7 @@ if __name__ == "__main__":
   print 'number of features:', len(dataset.token2int)
   print 'number of labels:', len(dataset.code2int)
 
-  # model definition
-  model = Sequential()
-  model.add(Embedding(len(dataset.token2int),
-                      cfg.getint('nn', 'embdims'),
-                      input_length=maxlen))
-  model.add(GlobalAveragePooling1D())
-
-  model.add(Dense(cfg.getint('nn', 'hidden'), name='ptvec'))
-  model.add(Activation('relu'))
-
-  model.add(Dense(classes))
-  model.add(Activation('sigmoid'))
+  model = get_model(cfg, len(dataset.token2int))
 
   optimizer = RMSprop(lr=cfg.getfloat('nn', 'learnrt'))
   model.compile(loss='binary_crossentropy',

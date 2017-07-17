@@ -166,7 +166,8 @@ class DatasetProvider:
 
       codes.append(code_vec)
 
-      # make feature vector for this example
+      # represent this example as a list of ints
+      # TODO: using a list of unique integers
       example = []
       for token in set(file_ngram_list):
         if token in self.token2int:
