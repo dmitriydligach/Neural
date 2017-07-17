@@ -39,7 +39,7 @@ if __name__ == "__main__":
   # make vectors for target task
   model = load_model(cfg.get('data', 'model_file'))
   interm_layer_model = Model(inputs=model.input,
-                             outputs=model.get_layer('ptvec').output)
+                             outputs=model.get_layer('HL').output)
   x = interm_layer_model.predict(x)
   print 'x shape (new):', x.shape
 
@@ -49,8 +49,9 @@ if __name__ == "__main__":
     # run n-fold cross validation
     classifier = LinearSVC(class_weight='balanced')
     cv_scores = cross_val_score(classifier, x, y, scoring='f1', cv=5)
-    print 'cv scores:', cv_scores
-    print 'average:', np.mean(cv_scores)
+    print 'fold f1s:', cv_scores
+    print 'average f1:', np.mean(cv_scores)
+    print 'standard devitation:', np.std(cv_scores)
 
   else:
     # randomly allocate a test set
