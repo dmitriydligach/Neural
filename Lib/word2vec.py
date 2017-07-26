@@ -43,13 +43,17 @@ class Model:
     average = self.average_words(alphabet.keys())
     vecs = np.zeros((len(alphabet), self.dimensions))
 
+    oov_count = 0
     for word, index in alphabet.items():
       if word in self.vectors:
         vecs[index, :] = self.vectors[word]
       else:
         # also tried np.random.uniform(low=-0.25, high=0.25, size=self.dimensions)
         vecs[index, :] = average
+        oov_count = oov_count + 1
 
+    oov_rate = float(oov_count) / len(alphabet)
+    print 'embedding oov rate: %s%%' % (round(oov_rate * 100, 2))
     return vecs
 
   def average_words(self, words):
