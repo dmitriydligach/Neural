@@ -58,7 +58,7 @@ def get_model(cfg, init_vectors, num_of_features):
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
   model.add(Dense(
     classes,
-    kernel_regularizer=regularizers.l1(0.0001)))
+    kernel_regularizer=regularizers.l2(0.001)))
   model.add(Activation('softmax'))
 
   return model
