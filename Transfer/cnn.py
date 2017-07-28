@@ -37,6 +37,30 @@ def print_config(cfg):
   print 'dropout:', cfg.get('cnn', 'dropout')
   print 'learnrt:', cfg.get('cnn', 'learnrt')
 
+def get_model(cfg, init_vectors, num_of_features):
+  """Model definition"""
+
+  model = Sequential()
+  model.add(Embedding(input_dim=num_of_features,
+                      output_dim=cfg.getint('cnn', 'embdims'),
+                      input_length=maxlen,
+                      trainable=True,
+                      weights=init_vectors))
+  model.add(Conv1D(filters=cfg.getint('cnn', 'filters'),
+                   kernel_size=cfg.getint('cnn', 'filtlen'),
+                   activation='relu'))
+  model.add(GlobalMaxPooling1D())
+
+  model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
+  model.add(Dense(cfg.getint('cnn', 'hidden')))
+  model.add(Activation('relu'))
+
+  model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
+  model.add(Dense(classes))
+  model.add(Activation('softmax'))
+
+  return model
+
 if __name__ == "__main__":
 
   # settings file specified as command-line argument
@@ -75,25 +99,7 @@ if __name__ == "__main__":
   print 'test_x shape:', test_x.shape
   print 'test_y shape:', test_y.shape, '\n'
 
-  model = Sequential()
-  model.add(Embedding(len(dataset.word2int),
-                       cfg.getint('cnn', 'embdims'),
-                       input_length=maxlen,
-                       trainable=True,
-                       weights=init_vectors))
-  model.add(Conv1D(filters=cfg.getint('cnn', 'filters'),
-                   kernel_size=cfg.getint('cnn', 'filtlen'),
-                   activation='relu'))
-  model.add(GlobalMaxPooling1D())
-
-  model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
-  model.add(Dense(cfg.getint('cnn', 'hidden')))
-  model.add(Activation('relu'))
-
-  model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
-  model.add(Dense(classes))
-  model.add(Activation('softmax'))
-
+  model = get_model(cfg, init_vectors, len(dataset.word2int))
   optimizer = RMSprop(lr=cfg.getfloat('cnn', 'learnrt'))
   model.compile(loss='categorical_crossentropy',
                 optimizer=optimizer,
