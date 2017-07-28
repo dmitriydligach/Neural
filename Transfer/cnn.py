@@ -17,8 +17,8 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 from keras.layers import Conv1D, GlobalMaxPooling1D
 from keras.layers.embeddings import Embedding
-import dataset
-import word2vec
+from keras import regularizers
+import dataset, word2vec
 
 def print_config(cfg):
   """Print configuration settings"""
@@ -56,7 +56,9 @@ def get_model(cfg, init_vectors, num_of_features):
   model.add(Activation('relu'))
 
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
-  model.add(Dense(classes))
+  model.add(Dense(
+    classes,
+    kernel_regularizer=regularizers.l1(0.0001)))
   model.add(Activation('softmax'))
 
   return model
