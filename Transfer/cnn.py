@@ -52,7 +52,9 @@ def get_model(cfg, init_vectors, num_of_features):
   model.add(GlobalMaxPooling1D())
 
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
-  model.add(Dense(cfg.getint('cnn', 'hidden')))
+  model.add(Dense(
+    cfg.getint('cnn', 'hidden'),
+    kernel_regularizer=regularizers.l2(0.001)))
   model.add(Activation('relu'))
 
   model.add(Dropout(cfg.getfloat('cnn', 'dropout')))
