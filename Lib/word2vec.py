@@ -19,12 +19,13 @@ def write_vectors(alphabet, weights, path):
 class Model:
   """Represents a word2vec model"""
 
-  def __init__(self, path):
+  def __init__(self, path, verbose=False):
     """Initiaize from a word2vec model file"""
 
     self.count = None      # number of vectors
     self.dimensions = None # number of dimensions
     self.vectors = {}      # key: word, value: numpy vector
+    self.verbose = verbose # verbosity
 
     with open(path) as file:
       for line in file:
@@ -53,7 +54,8 @@ class Model:
         oov_count = oov_count + 1
 
     oov_rate = float(oov_count) / len(alphabet)
-    print 'embedding oov rate: %s%%' % (round(oov_rate * 100, 2))
+    if(self.verbose == True):
+      print 'embedding oov rate: %s%%' % (round(oov_rate * 100, 2))
     return vecs
 
   def average_words(self, words):
